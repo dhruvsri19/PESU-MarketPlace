@@ -4,6 +4,21 @@
 -- ============================================================
 
 -- Enable required extensions
+-- =====================================================================
+-- ⚠️  MIGRATION: Run this in Supabase SQL Editor if campus/branch
+--    columns don't exist yet, or if you hit "could not find column
+--    in schema cache" errors.
+-- =====================================================================
+--
+--  ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS campus TEXT;
+--  ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS branch TEXT;
+--  ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS semester INT;
+--
+--  -- Force PostgREST to reload its schema cache:
+--  NOTIFY pgrst, 'reload schema';
+--
+-- =====================================================================
+
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "pg_trgm";  -- for fuzzy text search
 
@@ -18,6 +33,9 @@ CREATE TABLE public.profiles (
   phone TEXT,
   hostel TEXT,
   bio TEXT DEFAULT '',
+  campus TEXT,
+  branch TEXT,
+  semester INT,
   is_verified BOOLEAN DEFAULT false,
   created_at TIMESTAMPTZ DEFAULT now(),
   updated_at TIMESTAMPTZ DEFAULT now()

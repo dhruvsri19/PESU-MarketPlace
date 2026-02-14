@@ -23,7 +23,33 @@ export async function getConversations(req: AuthRequest, res: Response): Promise
             return;
         }
 
-        res.json({ conversations: data });
+        // Fetch the latest message for each conversation
+        const convIds = (data || []).map((c: any) => c.id);
+        let lastMessages: Record<string, any> = {};
+        if (convIds.length > 0) {
+            const { data: msgs } = await supabaseAdmin
+                .from('messages')
+                .select('conversation_id, content, sender_id, created_at')
+                .in('conversation_id', convIds)
+                .order('created_at', { ascending: false });
+
+            // Pick the first (latest) message per conversation
+            if (msgs) {
+                for (const msg of msgs) {
+                    if (!lastMessages[msg.conversation_id]) {
+                        lastMessages[msg.conversation_id] = msg;
+                    }
+                }
+            }
+        }
+
+        // Attach last_message to each conversation
+        const enriched = (data || []).map((conv: any) => ({
+            ...conv,
+            last_message: lastMessages[conv.id] || null,
+        }));
+
+        res.json({ conversations: enriched });
     } catch (err) {
         res.status(500).json({ error: 'Failed to fetch conversations' });
     }
@@ -173,5 +199,39 @@ export async function createConversation(req: AuthRequest, res: Response): Promi
         res.status(201).json({ conversation: data });
     } catch (err) {
         res.status(500).json({ error: 'Failed to create conversation' });
+    }
+}
+
+export async function getUnreadCount(req: AuthRequest, res: Response): Promise<void> {
+    try {
+        const userId = req.user!.id;
+
+        // Get all conversation IDs where user is a participant
+        const { data: convs } = await supabaseAdmin
+            .from('conversations')
+            .select('id')
+            .or(`buyer_id.eq.${userId},seller_id.eq.${userId}`);
+
+        if (!convs || convs.length === 0) {
+            res.json({ unread_count: 0 });
+            return;
+        }
+
+        const convIds = convs.map((c: any) => c.id);
+
+        // Count unread messages NOT sent by the current user
+        const { data: unreadMsgs } = await supabaseAdmin
+            .from('messages')
+            .select('conversation_id')
+            .in('conversation_id', convIds)
+            .eq('is_read', false)
+            .neq('sender_id', userId);
+
+        // Count distinct conversations with unread messages
+        const uniqueConvIds = new Set((unreadMsgs || []).map((m: any) => m.conversation_id));
+
+        res.json({ unread_count: uniqueConvIds.size });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to get unread count' });
     }
 }
