@@ -65,52 +65,47 @@ export function Navbar() {
         ) : null;
 
     return (
-        <nav className="sticky top-0 z-[100] glass-heavy">
+        <nav className="sticky top-0 z-[100] border-b border-zinc-800/50 bg-zinc-950/80 backdrop-blur-xl">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex items-center justify-between h-16">
+                <div className="flex items-center justify-between h-20">
                     {/* Logo */}
                     <Link href="/" className="flex items-center gap-2 group">
-                        <div className="w-9 h-9 rounded-xl flex items-center justify-center"
-                            style={{ background: 'var(--gradient-primary)' }}>
-                            <ShoppingBag className="w-5 h-5 text-white" />
+                        <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-white">
+                            <ShoppingBag className="w-4.5 h-4.5 text-black" />
                         </div>
-                        <span className="text-xl font-bold neon-text">UniMart</span>
+                        <span className="text-lg font-black tracking-tighter text-white">PESU MARKETPLACE</span>
                     </Link>
 
                     {/* Desktop Nav */}
-                    <div className="hidden md:flex items-center gap-2">
-                        {user && (
+                    <div className="hidden md:flex items-center gap-1">
+                        {loading ? (
+                            <div className="w-24 h-10 bg-zinc-800/50 animate-pulse rounded-xl" />
+                        ) : user ? (
                             <>
-                                <Link href="/sell" className="btn-glass flex items-center gap-2 text-sm">
-                                    <Plus className="w-4 h-4" />
-                                    Sell
+                                <Link href="/sell" className="px-4 py-2 rounded-xl text-sm font-bold bg-white text-black hover:opacity-90 transition-all mr-2">
+                                    Sell Item
                                 </Link>
                                 <Link href="/wishlist"
-                                    className="p-2.5 rounded-xl transition-all duration-200 hover:bg-white/5"
-                                    style={{ color: 'var(--text-secondary)' }}>
+                                    className="p-2.5 rounded-xl text-zinc-400 hover:text-white hover:bg-zinc-800/50 transition-all">
                                     <Heart className="w-5 h-5" />
                                 </Link>
                                 <Link href="/messages"
-                                    className="relative p-2.5 rounded-xl transition-all duration-200 hover:bg-white/5"
-                                    style={{ color: 'var(--text-secondary)' }}>
+                                    className="relative p-2.5 rounded-xl text-zinc-400 hover:text-white hover:bg-zinc-800/50 transition-all">
                                     <MessageCircle className="w-5 h-5" />
                                     <UnreadBadge />
                                 </Link>
                                 <Link href="/profile"
-                                    className="p-2.5 rounded-xl transition-all duration-200 hover:bg-white/5"
-                                    style={{ color: 'var(--text-secondary)' }}>
+                                    className="p-2.5 rounded-xl text-zinc-400 hover:text-white hover:bg-zinc-800/50 transition-all">
                                     <User className="w-5 h-5" />
                                 </Link>
                                 <button
                                     onClick={signOut}
-                                    className="p-2.5 rounded-xl transition-all duration-200 hover:bg-white/5"
-                                    style={{ color: 'var(--text-muted)' }}>
+                                    className="p-2.5 rounded-xl text-zinc-500 hover:text-red-400 hover:bg-red-500/5 transition-all">
                                     <LogOut className="w-5 h-5" />
                                 </button>
                             </>
-                        )}
-                        {!user && !loading && (
-                            <Link href="/login" className="btn-primary text-sm">
+                        ) : (
+                            <Link href="/login" className="px-6 py-2 rounded-xl text-sm font-bold bg-zinc-900 border border-zinc-800 text-white hover:bg-zinc-800 transition-all">
                                 Sign In
                             </Link>
                         )}
@@ -118,64 +113,52 @@ export function Navbar() {
 
                     {/* Mobile menu button */}
                     <button
-                        className="md:hidden p-2 rounded-xl hover:bg-white/5"
-                        onClick={() => setMobileOpen(!mobileOpen)}
-                        style={{ color: 'var(--text-secondary)' }}>
-                        {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+                        className="md:hidden p-2 rounded-xl text-zinc-400 hover:bg-zinc-800/50"
+                        onClick={() => setMobileOpen(!mobileOpen)}>
+                        {mobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
                     </button>
                 </div>
             </div>
 
             {/* Mobile menu */}
             {mobileOpen && (
-                <div className="md:hidden glass border-t"
-                    style={{ borderColor: 'var(--glass-border)' }}>
-                    <div className="px-4 py-3 space-y-2">
-                        {user ? (
+                <div className="md:hidden border-t border-zinc-800/50 bg-zinc-950/95 backdrop-blur-2xl">
+                    <div className="px-4 py-6 space-y-4">
+                        {loading ? (
+                            <div className="h-14 bg-zinc-900 border border-zinc-800 rounded-2xl animate-pulse" />
+                        ) : user ? (
                             <>
                                 <Link href="/sell" onClick={() => setMobileOpen(false)}
-                                    className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 transition-colors"
-                                    style={{ color: 'var(--text-primary)' }}>
-                                    <Plus className="w-5 h-5" style={{ color: 'var(--neon-purple)' }} />
+                                    className="flex items-center gap-3 p-4 rounded-2xl bg-white text-black font-bold">
+                                    <Plus className="w-5 h-5" />
                                     Sell an Item
                                 </Link>
-                                <Link href="/wishlist" onClick={() => setMobileOpen(false)}
-                                    className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 transition-colors"
-                                    style={{ color: 'var(--text-primary)' }}>
-                                    <Heart className="w-5 h-5" style={{ color: 'var(--neon-pink)' }} />
-                                    Wishlist
-                                </Link>
-                                <Link href="/messages" onClick={() => setMobileOpen(false)}
-                                    className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 transition-colors"
-                                    style={{ color: 'var(--text-primary)' }}>
-                                    <div className="relative">
-                                        <MessageCircle className="w-5 h-5" style={{ color: 'var(--neon-blue)' }} />
-                                        <UnreadBadge />
-                                    </div>
-                                    Messages
-                                    {unreadCount > 0 && (
-                                        <span className="ml-auto text-xs font-semibold px-2 py-0.5 rounded-full"
-                                            style={{ background: 'rgba(239,68,68,0.15)', color: '#ef4444' }}>
-                                            {unreadCount}
-                                        </span>
-                                    )}
-                                </Link>
-                                <Link href="/profile" onClick={() => setMobileOpen(false)}
-                                    className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 transition-colors"
-                                    style={{ color: 'var(--text-primary)' }}>
-                                    <User className="w-5 h-5" style={{ color: 'var(--text-secondary)' }} />
-                                    Profile
-                                </Link>
+                                <div className="grid grid-cols-3 gap-2">
+                                    <Link href="/wishlist" onClick={() => setMobileOpen(false)}
+                                        className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-zinc-900 border border-zinc-800 text-zinc-400">
+                                        <Heart className="w-5 h-5" />
+                                        <span className="text-[10px] font-bold uppercase">Wish</span>
+                                    </Link>
+                                    <Link href="/messages" onClick={() => setMobileOpen(false)}
+                                        className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-zinc-900 border border-zinc-800 text-zinc-400 relative">
+                                        <MessageCircle className="w-5 h-5" />
+                                        <span className="text-[10px] font-bold uppercase">Chat</span>
+                                    </Link>
+                                    <Link href="/profile" onClick={() => setMobileOpen(false)}
+                                        className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-zinc-900 border border-zinc-800 text-zinc-400">
+                                        <User className="w-5 h-5" />
+                                        <span className="text-[10px] font-bold uppercase">Profile</span>
+                                    </Link>
+                                </div>
                                 <button onClick={() => { signOut(); setMobileOpen(false); }}
-                                    className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 transition-colors w-full text-left"
-                                    style={{ color: 'var(--text-muted)' }}>
-                                    <LogOut className="w-5 h-5" />
+                                    className="flex items-center justify-center gap-3 p-4 rounded-2xl bg-red-500/10 text-red-400 font-bold w-full text-sm">
+                                    <LogOut className="w-4 h-4" />
                                     Sign Out
                                 </button>
                             </>
                         ) : (
                             <Link href="/login" onClick={() => setMobileOpen(false)}
-                                className="btn-primary block text-center text-sm w-full">
+                                className="block p-4 rounded-2xl bg-zinc-900 border border-zinc-800 text-center font-bold text-white">
                                 Sign In
                             </Link>
                         )}
@@ -184,4 +167,5 @@ export function Navbar() {
             )}
         </nav>
     );
+
 }

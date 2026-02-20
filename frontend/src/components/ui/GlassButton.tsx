@@ -27,10 +27,11 @@ export function GlassButton({
     };
 
     const variantClasses = {
-        primary: 'btn-primary',
-        glass: 'btn-glass',
-        ghost: 'bg-transparent border-none text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-white/5 rounded-xl transition-all duration-200 cursor-pointer',
+        primary: 'bg-white text-black hover:opacity-90 active:scale-[0.98] transition-all rounded-xl shadow-lg',
+        glass: 'bg-zinc-800/80 border border-zinc-700 text-zinc-200 hover:bg-zinc-700 hover:text-white active:scale-[0.98] backdrop-blur-md transition-all rounded-xl',
+        ghost: 'bg-transparent border-none text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800/50 rounded-xl transition-all cursor-pointer',
     };
+
 
     return (
         <button

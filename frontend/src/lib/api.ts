@@ -22,7 +22,16 @@ export const authApi = {
     sendOtp: (email: string) => api.post('/auth/otp/send', { email }),
     verifyOtp: (email: string, token: string) => api.post('/auth/otp/verify', { email, token }),
     getProfile: () => api.get('/auth/profile'),
-    updateProfile: (data: any) => api.put('/auth/profile', data),
+    updateProfile: (data: {
+        full_name?: string;
+        phone_number?: string;
+        usn?: string;
+        branch?: string;
+        semester?: number;
+        is_onboarded?: boolean;
+        [key: string]: any;
+    }) => api.put('/auth/profile', data),
+
 };
 
 export const productsApi = {

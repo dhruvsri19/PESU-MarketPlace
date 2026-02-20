@@ -22,7 +22,7 @@ export default function LoginPage() {
     // Redirect if already logged in
     useEffect(() => {
         if (!authLoading && user) {
-            router.push('/');
+            router.push('/dashboard');
         }
     }, [user, authLoading, router]);
 
@@ -73,8 +73,10 @@ export default function LoginPage() {
 
             if (verifyError) throw verifyError;
 
-            // Redirect to onboarding or home
-            router.push('/onboarding');
+            // Force hard navigation to clear landing page state
+            window.location.href = '/dashboard';
+
+
         } catch (err: any) {
             setError(err.message || 'Invalid OTP. Please check and try again.');
         } finally {

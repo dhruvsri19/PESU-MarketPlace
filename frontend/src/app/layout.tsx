@@ -25,7 +25,6 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body className={`${inter.variable} antialiased`}>
-        <script dangerouslySetInnerHTML={{ __html: "localStorage.clear(); console.log('Session Wiped');" }} />
         <AuthProvider>
           <div className="relative z-10 min-h-screen flex flex-col">
             <Navbar />

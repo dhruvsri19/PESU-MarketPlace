@@ -33,7 +33,8 @@ export default function OnboardingPage() {
     const router = useRouter();
 
     const [name, setName] = useState('');
-    const [campus, setCampus] = useState('');
+    const [usn, setUsn] = useState('');
+    const [phone, setPhone] = useState('');
     const [branch, setBranch] = useState('');
     const [semester, setSemester] = useState<number | ''>('');
     const [loading, setLoading] = useState(false);
@@ -51,17 +52,10 @@ export default function OnboardingPage() {
                 const { data } = await authApi.getProfile();
                 if (data?.profile) {
                     const profile = data.profile;
-
-                    // Try to parse existing full_name if it looks like a raw string
-                    // Or just use explicit columns if they exist
-                    let parsed: any = null;
-                    if (profile.full_name && !profile.campus) {
-                        parsed = parseCollegeDetails(profile.full_name);
-                    }
-
-                    setName(profile.full_name ? (parsed?.name || profile.full_name) : '');
-                    setCampus(profile.campus || (parsed?.campus === 'Unknown' ? '' : parsed?.campus) || '');
-                    setBranch(profile.branch || parsed?.branch || '');
+                    setName(profile.full_name || '');
+                    setUsn(profile.usn || '');
+                    setPhone(profile.phone_number || '');
+                    setBranch(profile.branch || '');
                     if (profile.semester) setSemester(profile.semester);
                 }
             } catch (err) {
@@ -79,7 +73,10 @@ export default function OnboardingPage() {
         setError('');
 
         if (!name.trim()) return setError('Please enter your full name');
-        if (!campus) return setError('Please select your campus');
+        if (!usn.trim()) return setError('Please enter your USN');
+        if (!usn.toUpperCase().startsWith('1PE')) return setError('USN must start with "1PE"');
+        if (!phone.trim()) return setError('Please enter your phone number');
+        if (phone.length < 10) return setError('Please enter a valid phone number');
         if (!branch) return setError('Please select your branch');
 
         setLoading(true);
@@ -87,18 +84,21 @@ export default function OnboardingPage() {
         try {
             await authApi.updateProfile({
                 full_name: name.trim(),
-                campus,
+                usn: usn.toUpperCase().trim(),
+                phone_number: phone.trim(),
                 branch,
-                ...(semester ? { semester: Number(semester) } : {}),
+                semester: semester ? Number(semester) : undefined,
+                is_onboarded: true,
             });
-            // Redirect to profile or home
-            router.push('/profile');
+            // Redirect to dashboard as requested
+            router.push('/');
         } catch (err: any) {
             setError(err.response?.data?.error || 'Failed to update profile');
         } finally {
             setLoading(false);
         }
     };
+
 
     if (authLoading) {
         return (
@@ -140,28 +140,24 @@ export default function OnboardingPage() {
                         icon={<User className="w-4 h-4" />}
                     />
 
-                    {/* Campus */}
-                    <div>
-                        <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
-                            Campus
-                        </label>
-                        <div className="grid grid-cols-2 gap-3">
-                            {CAMPUSES.map((c) => (
-                                <button
-                                    key={c.id}
-                                    type="button"
-                                    onClick={() => setCampus(c.id)}
-                                    className={`p-3 rounded-xl border transition-all text-sm flex flex-col items-center gap-2 ${campus === c.id
-                                        ? 'glass border-[var(--neon-purple)] bg-[rgba(168,85,247,0.1)] text-white'
-                                        : 'glass border-transparent text-[var(--text-muted)] hover:bg-white/5'
-                                        }`}
-                                >
-                                    <MapPin className={`w-5 h-5 ${campus === c.id ? 'text-[var(--neon-purple)]' : ''}`} />
-                                    {c.name}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
+                    {/* USN */}
+                    <GlassInput
+                        label="University Serial Number (USN)"
+                        value={usn}
+                        onChange={(e) => setUsn(e.target.value)}
+                        placeholder="e.g. 1PE21CS001"
+                        icon={<Hash className="w-4 h-4" />}
+                    />
+
+                    {/* Phone Number */}
+                    <GlassInput
+                        label="Phone Number"
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                        placeholder="e.g. 9876543210"
+                        icon={<MapPin className="w-4 h-4" />} // Using MapPin as a placeholder or could use Phone if imported
+                    />
+
 
                     {/* Branch */}
                     <div style={{ position: 'relative', zIndex: 9999 }}>

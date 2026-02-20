@@ -130,12 +130,12 @@ export function ProductCard({ product, index = 0, onDelete, initialWishlisted = 
 
     return (
         <Link href={`/product/${product.id}`}
-            className={`glass-card group block overflow-hidden relative transition-opacity duration-300 ${isDeleting ? 'pointer-events-none opacity-50' : ''}`}
+            className={`glass-card group block overflow-hidden relative border border-zinc-800 bg-zinc-900/50 backdrop-blur-md transition-all duration-300 hover:border-zinc-600 hover:shadow-[inset_0_0_20px_rgba(255,255,255,0.02)] ${isDeleting ? 'pointer-events-none opacity-50' : ''}`}
             style={{ animationDelay: `${index * 0.05}s` }}>
 
             {/* Deleting overlay */}
             {isDeleting && (
-                <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/40 backdrop-blur-sm rounded-2xl">
+                <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/40 backdrop-blur-sm rounded-xl">
                     <div className="flex flex-col items-center gap-2">
                         <div className="w-6 h-6 border-2 border-white/20 border-t-red-400 rounded-full animate-spin" />
                         <span className="text-xs font-medium text-red-300">Deleting…</span>
@@ -144,22 +144,18 @@ export function ProductCard({ product, index = 0, onDelete, initialWishlisted = 
             )}
 
             {/* Image */}
-            <div className="relative aspect-[4/3] overflow-hidden bg-white/[0.02]">
+            <div className="relative aspect-[4/3] overflow-hidden bg-zinc-950">
                 {product.images && product.images.length > 0 ? (
                     <img
                         src={product.images[0]}
                         alt={product.title}
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                        className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
                     />
                 ) : (
-                    <div className="w-full h-full flex items-center justify-center"
-                        style={{ color: 'var(--text-muted)' }}>
-                        <span className="text-4xl">📦</span>
+                    <div className="w-full h-full flex items-center justify-center text-zinc-700 bg-zinc-900">
+                        <span className="text-4xl opacity-20">📦</span>
                     </div>
                 )}
-
-                {/* Gradient overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
                 {/* Actions: Wishlist OR Edit/Delete */}
                 <div className="absolute top-3 right-3 flex gap-2 z-10">
@@ -171,14 +167,14 @@ export function ProductCard({ product, index = 0, onDelete, initialWishlisted = 
                                     e.stopPropagation();
                                     router.push(`/edit/${product.id}`);
                                 }}
-                                className="p-2 rounded-full glass hover:bg-white/10 transition-all text-blue-400 hover:text-blue-300"
+                                className="p-2 rounded-full bg-zinc-900/80 border border-zinc-700/50 backdrop-blur-md hover:bg-zinc-800/80 transition-all text-zinc-400 hover:text-white"
                             >
                                 <Edit className="w-4 h-4" />
                             </button>
                             <button
                                 onClick={handleDelete}
                                 disabled={isDeleting}
-                                className="p-2 rounded-full glass hover:bg-red-500/20 transition-all text-red-400 hover:text-red-300 disabled:opacity-50"
+                                className="p-2 rounded-full bg-zinc-900/80 border border-zinc-700/50 backdrop-blur-md hover:bg-red-500/20 transition-all text-zinc-400 hover:text-red-400 disabled:opacity-50"
                             >
                                 <Trash2 className="w-4 h-4" />
                             </button>
@@ -187,63 +183,62 @@ export function ProductCard({ product, index = 0, onDelete, initialWishlisted = 
                         <button
                             onClick={handleWishlistToggle}
                             disabled={wishlistLoading}
-                            className={`p-2 rounded-full glass transition-all duration-200 hover:scale-110 ${isWishlisted ? 'bg-pink-500/20' : ''}`}
-                            style={{
-                                color: isWishlisted ? '#ec4899' : 'var(--text-secondary)',
-                            }}>
+                            className={`p-2 rounded-full bg-zinc-900/80 border border-zinc-700/50 backdrop-blur-md transition-all duration-300 hover:scale-110 ${isWishlisted ? 'text-pink-500 border-pink-500/30' : 'text-zinc-400'}`}>
                             <Heart
-                                className={`w-4 h-4 transition-transform duration-200 ${isWishlisted ? 'scale-110' : ''}`}
-                                fill={isWishlisted ? '#ec4899' : 'none'}
+                                className={`w-4 h-4 transition-transform duration-300 ${isWishlisted ? 'scale-110 fill-pink-500' : ''}`}
                             />
                         </button>
                     )}
                 </div>
 
                 {/* Condition badge */}
-                <div className="absolute top-3 left-3 px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider glass"
-                    style={{ color: cond.color, borderColor: `${cond.color}40` }}>
+                <div className="absolute top-3 left-3 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest bg-zinc-950/80 border border-zinc-800 backdrop-blur-md"
+                    style={{ color: cond.color }}>
                     {cond.label}
                 </div>
-
-                {/* Category */}
-                {product.category && (
-                    <div className="absolute bottom-3 left-3 px-2.5 py-1 rounded-full text-[10px] font-medium glass"
-                        style={{ color: 'var(--text-secondary)' }}>
-                        {product.category.icon} {product.category.name}
-                    </div>
-                )}
             </div>
 
             {/* Content */}
-            <div className="p-4">
-                <h3 className="font-semibold text-sm truncate mb-1"
-                    style={{ color: 'var(--text-primary)' }}>
-                    {product.title}
-                </h3>
+            <div className="p-5">
+                <div className="flex justify-between items-start mb-2">
+                    <h3 className="font-bold text-base text-zinc-100 truncate flex-1 tracking-tight">
+                        {product.title}
+                    </h3>
+                </div>
 
-                <div className="flex items-center justify-between mb-3">
-                    <span className="text-lg font-bold neon-text">
+                <div className="flex items-center justify-between mb-4">
+                    <span className="text-xl font-black text-white tracking-tighter">
                         ₹{product.price.toLocaleString()}
                     </span>
-                    <span className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
+                    <span className="text-[10px] font-medium text-zinc-500 uppercase tracking-widest">
                         {timeAgo(product.created_at)}
                     </span>
                 </div>
 
-                {/* Seller */}
-                {product.seller && (
-                    <div className="flex items-center gap-2 pt-3"
-                        style={{ borderTop: '1px solid var(--glass-border)' }}>
-                        <div className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-semibold"
-                            style={{ background: 'var(--gradient-primary)', color: 'white' }}>
-                            {product.seller.full_name?.charAt(0)?.toUpperCase() || '?'}
+                {/* Seller & Category Footer */}
+                <div className="flex items-center justify-between pt-4 border-t border-zinc-800/50">
+                    {product.seller && (
+                        <div className="flex items-center gap-2">
+                            <div className="w-6 h-6 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center text-[10px] font-black text-zinc-300 overflow-hidden">
+                                {product.seller.avatar_url ? (
+                                    <img src={product.seller.avatar_url} alt="" className="w-full h-full object-cover" />
+                                ) : (
+                                    product.seller.full_name?.charAt(0)?.toUpperCase() || '?'
+                                )}
+                            </div>
+                            <span className="text-[11px] font-medium text-zinc-400">
+                                {product.seller.full_name?.split(' ')[0] || 'Peer'}
+                            </span>
                         </div>
-                        <span className="text-xs truncate" style={{ color: 'var(--text-secondary)' }}>
-                            {product.seller.full_name || 'Anonymous'}
+                    )}
+                    {product.category && (
+                        <span className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest">
+                            {product.category.name}
                         </span>
-                    </div>
-                )}
+                    )}
+                </div>
             </div>
         </Link>
     );
+
 }

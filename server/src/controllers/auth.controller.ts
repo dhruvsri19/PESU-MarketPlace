@@ -109,17 +109,22 @@ export async function updateProfile(req: Request, res: Response): Promise<void> 
             return;
         }
 
-        const { full_name, phone, hostel, bio, avatar_url, campus, branch, semester } = req.body;
+        const { full_name, phone_number, phone, usn, is_onboarded, hostel, bio, avatar_url, campus, branch, semester } = req.body;
 
         const updatePayload: Record<string, any> = {};
         if (full_name !== undefined) updatePayload.full_name = full_name;
-        if (phone !== undefined) updatePayload.phone = phone;
+        if (phone_number !== undefined) updatePayload.phone_number = phone_number;
+        else if (phone !== undefined) updatePayload.phone_number = phone; // Backward compatibility or just in case
+
+        if (usn !== undefined) updatePayload.usn = usn;
+        if (is_onboarded !== undefined) updatePayload.is_onboarded = is_onboarded;
         if (hostel !== undefined) updatePayload.hostel = hostel;
         if (bio !== undefined) updatePayload.bio = bio;
         if (avatar_url !== undefined) updatePayload.avatar_url = avatar_url;
         if (campus !== undefined) updatePayload.campus = campus;
         if (branch !== undefined) updatePayload.branch = branch;
         if (semester !== undefined) updatePayload.semester = semester;
+
 
         const { data, error } = await supabaseAdmin
             .from('profiles')
