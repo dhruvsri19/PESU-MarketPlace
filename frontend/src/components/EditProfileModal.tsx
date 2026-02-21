@@ -22,11 +22,12 @@ interface EditProfileModalProps {
         branch?: string;
         semester?: number;
     };
+    isFirstTime?: boolean;
     onClose: () => void;
     onUpdate: () => void;
 }
 
-export function EditProfileModal({ user, profile, onClose, onUpdate }: EditProfileModalProps) {
+export function EditProfileModal({ user, profile, isFirstTime, onClose, onUpdate }: EditProfileModalProps) {
     const [fullName, setFullName] = useState(profile.full_name || '');
     const [bio, setBio] = useState(profile.bio || '');
     const [campus, setCampus] = useState(profile.campus || '');
@@ -60,7 +61,7 @@ export function EditProfileModal({ user, profile, onClose, onUpdate }: EditProfi
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
-            onClick={onClose}>
+            onClick={!isFirstTime ? onClose : undefined}>
             {/* Backdrop */}
             <div className="absolute inset-0 bg-black/60 backdrop-blur-md" />
 
@@ -71,12 +72,16 @@ export function EditProfileModal({ user, profile, onClose, onUpdate }: EditProfi
                 {/* Header */}
                 <div className="px-6 pt-6 pb-4 flex items-center justify-between border-b"
                     style={{ borderColor: 'var(--glass-border)' }}>
-                    <h2 className="text-lg font-bold text-white">Edit Profile</h2>
-                    <button onClick={onClose}
-                        className="p-1.5 rounded-lg hover:bg-white/10 transition-colors"
-                        style={{ color: 'var(--text-muted)' }}>
-                        <X className="w-5 h-5" />
-                    </button>
+                    <h2 className="text-lg font-bold text-white">
+                        {isFirstTime ? 'Complete Your Profile' : 'Edit Profile'}
+                    </h2>
+                    {!isFirstTime && (
+                        <button onClick={onClose}
+                            className="p-1.5 rounded-lg hover:bg-white/10 transition-colors"
+                            style={{ color: 'var(--text-muted)' }}>
+                            <X className="w-5 h-5" />
+                        </button>
+                    )}
                 </div>
 
                 {/* Body */}
@@ -213,10 +218,12 @@ export function EditProfileModal({ user, profile, onClose, onUpdate }: EditProfi
                 {/* Footer */}
                 <div className="px-6 py-4 border-t flex items-center gap-3"
                     style={{ borderColor: 'var(--glass-border)' }}>
-                    <button onClick={onClose}
-                        className="flex-1 btn-glass py-2.5 text-sm rounded-xl font-medium">
-                        Cancel
-                    </button>
+                    {!isFirstTime && (
+                        <button onClick={onClose}
+                            className="flex-1 btn-glass py-2.5 text-sm rounded-xl font-medium">
+                            Cancel
+                        </button>
+                    )}
                     <button
                         onClick={handleSave}
                         disabled={saving}

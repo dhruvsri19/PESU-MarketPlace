@@ -3,6 +3,7 @@
 import { ReactNode } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { AnimatedAuthWrapper } from '@/components/AnimatedAuthWrapper';
+import { EditProfileModal } from '@/components/EditProfileModal';
 import LoginPage from '@/app/login/page';
 
 interface RootAuthManagerProps {
@@ -10,7 +11,9 @@ interface RootAuthManagerProps {
 }
 
 export function RootAuthManager({ children }: RootAuthManagerProps) {
-    const { user, loading } = useAuth();
+    const { user, profile, loading, refreshProfile } = useAuth();
+
+    const isNewUser = profile && (!profile.full_name || !profile.campus || !profile.branch);
 
     // Show nothing or a full screen spinner while checking auth status initially
     if (loading) {
@@ -29,7 +32,20 @@ export function RootAuthManager({ children }: RootAuthManagerProps) {
             </AnimatedAuthWrapper>
 
             {/* Render the Dashboard only if the user is authenticated */}
-            {user && children}
+            {user && (
+                <>
+                    {isNewUser && (
+                        <EditProfileModal
+                            user={user}
+                            profile={profile}
+                            isFirstTime={true}
+                            onClose={() => { }}
+                            onUpdate={() => { refreshProfile() }}
+                        />
+                    )}
+                    {children}
+                </>
+            )}
         </>
     );
 }

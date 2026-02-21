@@ -35,8 +35,8 @@ export function DashboardUI({ initialProducts, categories }: DashboardUIProps) {
                     <button
                         onClick={() => setSelectedCategory('ALL')}
                         className={`px-5 py-2.5 rounded-xl text-xs font-bold transition-all uppercase ${selectedCategory === 'ALL'
-                                ? 'bg-white text-black hover:opacity-90'
-                                : 'border border-zinc-800 bg-zinc-900/50 text-zinc-400 hover:text-white hover:border-zinc-700'
+                            ? 'bg-white text-black hover:opacity-90'
+                            : 'border border-zinc-800 bg-zinc-900/50 text-zinc-400 hover:text-white hover:border-zinc-700'
                             }`}
                     >
                         ALL ITEMS
@@ -49,8 +49,8 @@ export function DashboardUI({ initialProducts, categories }: DashboardUIProps) {
                                 key={cat.id}
                                 onClick={() => setSelectedCategory(cat.name.toUpperCase())}
                                 className={`px-5 py-2.5 rounded-xl text-xs font-bold transition-all uppercase ${isSelected
-                                        ? 'bg-white text-black hover:opacity-90'
-                                        : 'border border-zinc-800 bg-zinc-900/50 text-zinc-400 hover:text-white hover:border-zinc-700'
+                                    ? 'bg-white text-black hover:opacity-90'
+                                    : 'border border-zinc-800 bg-zinc-900/50 text-zinc-400 hover:text-white hover:border-zinc-700'
                                     }`}
                             >
                                 {cat.icon} {cat.name}
