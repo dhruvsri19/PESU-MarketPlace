@@ -19,12 +19,7 @@ export default function LoginPage() {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
 
-    // Redirect if already logged in
-    useEffect(() => {
-        if (!authLoading && user) {
-            router.push('/dashboard');
-        }
-    }, [user, authLoading, router]);
+    // RootAuthManager now manages visibility and rendering. We don't redirect here.
 
     const validatePESUEmail = (email: string) => {
         return email.endsWith('@pesu.pes.edu') || email.endsWith('@stu.pes.edu');
@@ -73,9 +68,9 @@ export default function LoginPage() {
 
             if (verifyError) throw verifyError;
 
-            // Force hard navigation to clear landing page state
-            window.location.href = '/dashboard';
-
+            // The RootAuthManager handles the transition automatically as `user` becomes true.
+            // No hard navigation needed here:
+            // window.location.href = '/dashboard';
 
         } catch (err: any) {
             setError(err.message || 'Invalid OTP. Please check and try again.');
@@ -84,13 +79,7 @@ export default function LoginPage() {
         }
     };
 
-    if (authLoading) {
-        return (
-            <div className="min-h-[80vh] flex items-center justify-center">
-                <div className="w-8 h-8 border-2 border-white/20 border-t-[var(--neon-purple)] rounded-full animate-spin" />
-            </div>
-        );
-    }
+    // The loading state initial spinner is now in RootAuthManager as well.
 
     return (
         <div className="min-h-[80vh] flex flex-col items-center justify-center p-4 relative">
@@ -125,7 +114,7 @@ export default function LoginPage() {
                                 type="email"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
-                                placeholder="name@pesu.pes.edu"
+                                placeholder="srn@stu.pes.edu"
                                 icon={<Mail className="w-4 h-4" />}
                                 required
                             />
