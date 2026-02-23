@@ -1,175 +1,167 @@
-Pesu Marketplace
-The Trusted Campus Exchange for PES University
-A high-performance, secure, and exclusive peer-to-peer commerce platform that transforms how students buy, sell, and trade essentials within the campus ecosystem.
+<p align="center">
+  <h1 align="center">🏪 PESU Marketplace</h1>
+  <p align="center">
+    <em>Campus commerce, reimagined — built by students, for students.</em>
+  </p>
+</p>
 
-Table of Contents
-Overview
+<p align="center">
+  <a href="https://nextjs.org"><img src="https://img.shields.io/badge/Next.js-16-black?style=for-the-badge&logo=next.js" alt="Next.js" /></a>
+  <a href="https://supabase.com"><img src="https://img.shields.io/badge/Supabase-Backend-3FCF8E?style=for-the-badge&logo=supabase&logoColor=white" alt="Supabase" /></a>
+  <a href="https://vercel.com"><img src="https://img.shields.io/badge/Vercel-Deployed-000?style=for-the-badge&logo=vercel" alt="Vercel" /></a>
+  <a href="https://tailwindcss.com"><img src="https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white" alt="Tailwind CSS" /></a>
+  <img src="https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge" alt="License" />
+</p>
 
-The Problem
+---
 
-Core Features
+## 📖 Overview & The Problem
 
-Technology Stack
+Public marketplaces (OLX, Facebook Marketplace) are filled with scammers, fake listings, and zero accountability. University students deserve a **trusted, closed-loop trading environment** where every participant is a verified peer.
 
-Architecture
+**PESU Marketplace** solves this by restricting access exclusively to PES University students through institutional email verification. Every user is a real, identifiable student — making transactions safer and disputes resolvable through campus channels.
 
-Getting Started
+---
 
-Security & Authentication
+## ✨ Core Features
 
-Project Structure
+- **🔐 Passwordless OTP Authentication** — Students sign in with a one-time code sent to their `@pesu.pes.edu` or `@stu.pes.edu` email. No passwords to remember or leak.
+- **⚡ Frictionless Onboarding** — Email-first login; profile details (name, SRN, campus, branch) are collected after first sign-in via a guided modal.
+- **🛍️ Real-Time Product Listings** — Browse, post, and manage listings with live updates powered by Supabase Realtime.
+- **📸 Image Uploads** — Direct-to-cloud image uploads via Supabase Storage with instant preview.
+- **💎 Liquid Glass UI** — A modern, premium interface with glassmorphism, neon accents, and smooth Framer Motion animations.
+- **🎓 Campus-Gated Access** — Only verified PES University email holders can access the platform — zero outsiders.
 
-Roadmap
+---
 
-Contributing
+## 🛠️ Tech Stack
 
-License
+| Layer        | Technology                                                  |
+| ------------ | ----------------------------------------------------------- |
+| **Frontend** | Next.js 16, React 19, TypeScript, Tailwind CSS 4            |
+| **Backend**  | Express.js, TypeScript, Zod (validation)                    |
+| **Database** | Supabase (PostgreSQL), Row Level Security (RLS)             |
+| **Auth**     | Supabase Auth (Email OTP) + Custom SMTP relay via Brevo     |
+| **Storage**  | Supabase Storage (product images, avatars)                  |
+| **UI/UX**    | Framer Motion, Lucide Icons, custom Glassmorphism system    |
+| **Hosting**  | Vercel (frontend), Supabase (backend services)              |
+| **Security** | Helmet, CORS, express-rate-limit, Supabase RLS              |
 
-Overview
-Pesu Marketplace is a modern, real-time trading platform designed exclusively for students at PES University. The application provides a centralized, secure hub for exchanging academic resources, electronics, and lifestyle gear. By leveraging a strict custom Email OTP authentication flow, it ensures a 100% verified student user base, eliminating the risks associated with public marketplaces.
+---
 
-Built for scale and speed, the platform runs on Next.js and React Native, utilizing Supabase for real-time data synchronization and edge-network deployment via Vercel for instant load times.
+## 🚀 Getting Started
 
-The Problem
-Campus commerce is traditionally fragmented across informal WhatsApp groups, physical bulletin boards, or public platforms (like OLX or Facebook Marketplace) that pose several barriers for students:
+### Prerequisites
 
-Barrier	Description
-Trust & Safety	Public platforms expose students to external scammers and unreliable strangers.
-Discoverability	WhatsApp group messages disappear rapidly; finding specific textbooks or gear requires constant monitoring.
-Friction	Coordinating meetups and verifying the identity of a buyer/seller on anonymous platforms is time-consuming.
-Relevance	Broad marketplaces are cluttered with non-student-focused items, making it hard to find campus-specific essentials.
-Pesu Marketplace addresses all four barriers by creating a walled-garden ecosystem restricted strictly to the university cohort.
+- **Node.js** ≥ 18
+- **npm** ≥ 9
+- A [Supabase](https://supabase.com) project with Email OTP auth enabled
 
-Core Features
-1. Zero-Friction Passwordless Auth
+### 1. Clone the Repository
 
-Utilizes a custom Google SMTP relay integrated with Supabase GoTrue to deliver highly reliable One-Time Passwords (OTPs) directly to student inboxes. No passwords to remember, no unauthorized external access.
+```bash
+git clone https://github.com/dhruvsri19/MarketPlace.git
+cd MarketPlace
+```
 
-2. Real-Time "Liquid Glass" UI
+### 2. Install Dependencies
 
-A highly responsive, cross-platform interface featuring a modern "Liquid Glass" design system. Product listings, image uploads, and inventory states update dynamically without requiring page refreshes, powered by Supabase real-time subscriptions.
-
-3. P2P Direct Connectivity
-
-Eliminates the middleman. Buyers can instantly view listing details and connect directly with sellers on campus. The platform handles the cataloging and discovery, leaving the transaction logistics to the students.
-
-Technology Stack
-Category	Technology	Notes
-Frontend Framework	React / Next.js	Server-Side Rendering (SSR) for optimal SEO and initial load speeds.
-Mobile Capability	React Native	Shared architectural logic for future iOS/Android native deployment.
-Backend / BaaS	Supabase	PostgreSQL database, Auth, and Storage all in one managed service.
-Styling	Tailwind CSS	Utility-first CSS framework enforcing the custom design system.
-Deployment	Vercel	Edge network hosting for sub-second latency globally.
-Mail Transport	Custom SMTP (Brevo/Gmail)	Ensures high deliverability of OTPs circumventing strict campus spam filters.
-Architecture
-Pesu Marketplace utilizes a serverless, decoupled architecture. The frontend communicates directly with the Supabase PostgreSQL database via securely defined Row Level Security (RLS) policies.
-
-Plaintext
-┌──────────────────────────────────────────────────────┐
-│                  User's Device (Web/Mobile)          │
-│                                                      │
-│   Next.js / React Native Client                      │
-│   ┌──────────────────┐   ┌──────────────────┐        │
-│   │  Auth Flow       │   │  Market Dashboard│        │
-│   │  (OTP via Email) │   │  (Real-time UI)  │        │
-│   └────────┬─────────┘   └────────┬─────────┘        │
-│            │                      │                  │
-│   ┌────────┴──────────────────────┴──────────────┐   │
-│   │               Supabase BaaS                  │   │
-│   │  GoTrue Auth    |  PostgreSQL Database       │   │
-│   │  Edge Functions |  Storage (Images)          │   │
-│   └────────┬─────────────────────────────────────┘   │
-│            │                                         │
-│   ┌────────┴─────────┐                               │
-│   │ Custom Gmail SMTP│  ← Delivers OTP securely      │
-│   └──────────────────┘                               │
-└──────────────────────────────────────────────────────┘
-Getting Started
-Prerequisites
-
-Node.js v18 or higher
-
-npm, yarn, or pnpm
-
-A Supabase project with Authentication and Database enabled
-
-Installation
-
-Bash
-# Clone the repository
-git clone https://github.com/[your-username]/pesu-marketplace.git
-cd pesu-marketplace
-
-# Install dependencies
+```bash
+# Frontend
+cd frontend
 npm install
 
-# Set up environment variables
-cp .env.example .env.local
-Populate .env.local with your Supabase keys:
+# Backend (in a separate terminal)
+cd ../server
+npm install
+```
 
-Code snippet
-NEXT_PUBLIC_SUPABASE_URL=your_project_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
-Start the Development Server
+### 3. Configure Environment Variables
 
-Bash
+**Frontend** — create `frontend/.env.local`:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+NEXT_PUBLIC_API_URL=http://localhost:8000/api
+SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+```
+
+**Backend** — create `server/.env`:
+
+```env
+# Supabase
+SUPABASE_URL=your_supabase_project_url
+SUPABASE_ANON_KEY=your_supabase_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+
+# Server
+PORT=8000
+NODE_ENV=development
+
+# CORS
+FRONTEND_URL=http://localhost:3000
+```
+
+### 4. Run the Development Servers
+
+```bash
+# Terminal 1 — Backend
+cd server
 npm run dev
-The application will be available at http://localhost:3000.
 
-Security & Authentication
-Trust is the foundation of Pesu Marketplace.
+# Terminal 2 — Frontend
+cd frontend
+npm run dev
+```
 
-Row Level Security (RLS): Database reads and writes are strictly governed by Postgres RLS policies. Users can only edit or delete their own product listings.
+Open [http://localhost:3000](http://localhost:3000) and sign in with your PESU email.
 
-OTP Fallback: The custom SMTP configuration ensures that even if strict domain filtering is applied, students will receive their login credentials reliably.
+---
 
-Project Structure
-Plaintext
-pesu-marketplace/
-├── public/                # Static assets and icons
-├── src/
-│   ├── app/               # Next.js App Router (Pages & Layouts)
-│   ├── components/        # Reusable UI (ProductCards, AuthForms)
-│   ├── lib/               # Utility functions and Supabase client config
-│   ├── styles/            # Global CSS and Tailwind directives
-│   └── types/             # TypeScript definitions for DB schemas
-├── .env.local             # Local environment secrets (ignored by git)
-├── next.config.js         # Next.js configuration
-├── tailwind.config.js     # Theme and design system config
-└── package.json
-Roadmap
-Phase 1 — Launch & Polish (0–3 Months)
+## 🔒 Security Architecture
 
-[x] Core OTP Authentication flow
+### Custom SMTP Relay (Brevo)
 
-[x] Basic product listing and image upload
+Supabase's default email sender has strict rate limits and often lands in spam. PESU Marketplace uses a **custom Gmail SMTP relay powered by [Brevo](https://www.brevo.com/)** configured in the Supabase dashboard under **Auth → SMTP Settings**. This ensures:
 
-[ ] Advanced filtering by category (Textbooks, Electronics, etc.)
+- OTP emails are delivered reliably to university inboxes.
+- Emails originate from a trusted sender domain, reducing spam filtering.
+- High deliverability with no rate-limit bottlenecks during peak usage.
 
-[ ] Implement "Save to Wishlist" functionality
+### Row Level Security (RLS)
 
-Phase 2 — Scale & Native (3–9 Months)
+Every table in the Supabase PostgreSQL database has **Row Level Security** policies enabled:
 
-[ ] Full React Native deployment to iOS App Store and Google Play
+- **Users** can only read and update their own profile data.
+- **Product listings** are publicly readable but only editable/deletable by the owner.
+- **Storage objects** (images) are scoped to the authenticated user who uploaded them.
 
-[ ] In-app chat functionality utilizing Supabase Realtime
+> [!IMPORTANT]
+> If you fork this project, ensure RLS is enabled on all tables. Disabling it exposes user data to every authenticated client.
 
-[ ] Push notifications for new messages and saved item price drops
+---
 
-Phase 3 — Ecosystem (9–12 Months)
+## 🤝 Contributing
 
-[ ] Automated textbook ISBN scanning using device cameras
+Contributions are welcome! To get started:
 
-[ ] Integration with university calendar for high-demand periods (e.g., end-of-semester textbook sales)
+1. **Fork** the repository.
+2. **Create a feature branch**: `git checkout -b feature/your-feature-name`
+3. **Commit your changes**: `git commit -m "feat: add your feature"`
+4. **Push to the branch**: `git push origin feature/your-feature-name`
+5. **Open a Pull Request** against `main`.
 
-Contributing
-Contributions from the PES University community are highly encouraged to make this the best tool for our campus.
+Please keep PRs focused and descriptive. For large changes, open an issue first to discuss the approach.
 
-Fork the repository and create a feature branch from main.
+---
 
-Ensure any new database tables include corresponding Row Level Security (RLS) policies.
+## 📄 License
 
-Submit a Pull Request detailing the feature or bug fix.
+This project is licensed under the **MIT License**. See the [LICENSE](LICENSE) file for details.
 
-License
-This project is licensed under the MIT License. See the LICENSE file for full details
+---
+
+<p align="center">
+  Built with ☕ at <strong>PES University</strong>
+</p>
