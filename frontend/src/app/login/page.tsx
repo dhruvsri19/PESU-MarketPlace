@@ -133,7 +133,7 @@ export default function LoginPage() {
                                 />
                                 <button
                                     type="button"
-                                    onClick={() => setStage('email')}
+                                    onClick={() => { setEmail(''); setOtp(''); setError(''); setSuccess(''); setStage('email'); }}
                                     className="text-xs hover:text-white transition-colors"
                                     style={{ color: 'var(--text-muted)' }}
                                 >
