@@ -33,10 +33,16 @@ function ProductSkeleton() {
 }
 
 export function DashboardUI({ initialProducts, categories }: DashboardUIProps) {
+    const [products, setProducts] = useState<any[]>(initialProducts);
     const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
     const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
     const [initialLoaded, setInitialLoaded] = useState(false);
     const sentinelRef = useRef<HTMLDivElement>(null);
+
+    // Sync if parent re-passes new initialProducts
+    useEffect(() => {
+        setProducts(initialProducts);
+    }, [initialProducts]);
 
     // Mark initial load complete after first render
     useEffect(() => {
@@ -45,11 +51,11 @@ export function DashboardUI({ initialProducts, categories }: DashboardUIProps) {
 
     // Memoize filtered products so we only recompute when inputs change
     const filteredProducts = useMemo(() => {
-        if (selectedCategory === 'ALL') return initialProducts;
-        return initialProducts.filter(
+        if (selectedCategory === 'ALL') return products;
+        return products.filter(
             p => p.category?.name?.toLowerCase() === selectedCategory.toLowerCase()
         );
-    }, [initialProducts, selectedCategory]);
+    }, [products, selectedCategory]);
 
     // Reset visible count when category changes
     useEffect(() => {
@@ -142,7 +148,12 @@ export function DashboardUI({ initialProducts, categories }: DashboardUIProps) {
                 <>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 stagger-children">
                         {visibleProducts.map((product, i) => (
-                            <ProductCard key={product.id} product={product} index={i} />
+                            <ProductCard
+                                key={product.id}
+                                product={product}
+                                index={i}
+                                onDelete={() => setProducts(prev => prev.filter(p => p.id !== product.id))}
+                            />
                         ))}
                     </div>
 
