@@ -177,7 +177,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
             router.push(`/product/${id}`);
             router.refresh();
         } catch (err: any) {
-            const msg = err.response?.data?.error || err.message || 'Failed to update listing';
+            const msg = err?.message || 'Failed to update listing';
             setError(msg);
         } finally {
             setSaving(false);
