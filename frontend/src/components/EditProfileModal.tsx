@@ -1,7 +1,9 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { authApi } from '@/lib/api';
+import { supabase } from '@/lib/supabase';
 import { X, Save, Loader2, MapPin, GraduationCap, BookOpen, User } from 'lucide-react';
 
 const CAMPUSES = [
@@ -28,6 +30,7 @@ interface EditProfileModalProps {
 }
 
 export function EditProfileModal({ user, profile, isFirstTime, onClose, onUpdate }: EditProfileModalProps) {
+    const router = useRouter();
     const [fullName, setFullName] = useState(profile.full_name || '');
     const [bio, setBio] = useState(profile.bio || '');
     const [campus, setCampus] = useState(profile.campus || '');
@@ -42,7 +45,26 @@ export function EditProfileModal({ user, profile, isFirstTime, onClose, onUpdate
         setError('');
 
         try {
-            // Uses authApi.updateProfile → public.profiles table (NOT auth.updateUser)
+            // ── Ensure session is valid before API call ──
+            let { data: { session }, error: sessionError } = await supabase.auth.getSession();
+
+            if (sessionError || !session) {
+                console.log('[EditProfile] Session missing/expired, attempting refresh...');
+                const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+                if (refreshError || !refreshData.session) {
+                    console.error('[EditProfile] Session refresh failed:', refreshError);
+                    setError('Your session has expired. Signing you out — please log in again.');
+                    setSaving(false);
+                    await supabase.auth.signOut();
+                    router.push('/login');
+                    return;
+                }
+                session = refreshData.session;
+                console.log('[EditProfile] Session refreshed successfully');
+            }
+
+            console.log('[EditProfile] Saving profile for user:', session.user.id);
+
             await authApi.updateProfile({
                 full_name: fullName.trim(),
                 bio: bio.trim(),
@@ -54,8 +76,14 @@ export function EditProfileModal({ user, profile, isFirstTime, onClose, onUpdate
             onClose();
         } catch (err: any) {
             const msg = err?.response?.data?.error || err?.message || 'Unknown error';
-            console.error('Profile save error:', err);
-            setError(`Save failed: ${msg}`);
+            console.error('[EditProfile] Save error:', err);
+            if (msg.toLowerCase().includes('token') || msg.toLowerCase().includes('expired')) {
+                setError('Session expired — refreshing automatically. Please try saving again.');
+                // Attempt background refresh for next try
+                supabase.auth.refreshSession();
+            } else {
+                setError(`Save failed: ${msg}`);
+            }
         } finally {
             setSaving(false);
         }

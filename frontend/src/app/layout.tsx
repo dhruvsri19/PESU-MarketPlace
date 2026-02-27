@@ -5,6 +5,7 @@ import { AuthProvider } from "@/context/AuthContext";
 import { Navbar } from "@/components/ui/Navbar";
 
 import { BottomNav } from "@/components/ui/BottomNav";
+import { NewUserGate } from "@/components/NewUserGate";
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
@@ -33,6 +34,7 @@ export default function RootLayout({
             </main>
             <BottomNav />
           </div>
+          <NewUserGate />
         </AuthProvider>
       </body>
     </html>

@@ -10,6 +10,8 @@ interface AuthContextType {
     session: Session | null;
     profile: any | null;
     loading: boolean;
+    isNewUser: boolean;
+    setIsNewUser: (v: boolean) => void;
     signOut: () => Promise<void>;
     refreshProfile: () => Promise<void>;
 }
@@ -19,6 +21,8 @@ const AuthContext = createContext<AuthContextType>({
     session: null,
     profile: null,
     loading: true,
+    isNewUser: false,
+    setIsNewUser: () => { },
     signOut: async () => { },
     refreshProfile: async () => { },
 });
@@ -29,6 +33,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [session, setSession] = useState<Session | null>(null);
     const [profile, setProfile] = useState<any | null>(null);
     const [loading, setLoading] = useState(true);
+    const [isNewUser, setIsNewUser] = useState(false);
 
     // Track whether we've already fetched the profile for this user
     const profileFetchedForRef = useRef<string | null>(null);
@@ -42,10 +47,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 .select('*')
                 .eq('id', userId)
                 .single();
+            console.log('[AuthContext] Profile query result for', userId, ':', data);
             setProfile(data);
             profileFetchedForRef.current = userId;
+
+            // Detect new user: no profile row or empty full_name
+            const needsSetup = !data || !data.full_name;
+            console.log('[AuthContext] isNewUser =', needsSetup);
+            setIsNewUser(needsSetup);
         } catch {
-            // Silent fail — profile will be null
+            // No profile row at all → new user
+            console.log('[AuthContext] No profile found for', userId, '→ isNewUser = true');
+            setIsNewUser(true);
         }
     }, [profile]);
 
@@ -104,7 +117,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }, [user, fetchProfile]);
 
     return (
-        <AuthContext.Provider value={{ user, session, profile, loading, signOut, refreshProfile }}>
+        <AuthContext.Provider value={{ user, session, profile, loading, isNewUser, setIsNewUser, signOut, refreshProfile }}>
             {children}
         </AuthContext.Provider>
     );
