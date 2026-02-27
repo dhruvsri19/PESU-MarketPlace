@@ -127,6 +127,7 @@ function ProductCardInner({ product, index = 0, onDelete, initialWishlisted = fa
             if (onDelete) {
                 onDelete();
             }
+            setIsDeleting(false);
         } catch (err) {
             console.error('Failed to delete product:', err);
             alert('Failed to delete product. Please try again.');
@@ -227,7 +228,14 @@ function ProductCardInner({ product, index = 0, onDelete, initialWishlisted = fa
                 {/* Seller & Category Footer */}
                 <div className="flex items-center justify-between pt-4 border-t border-zinc-800/50">
                     {product.seller && (
-                        <div className="flex items-center gap-2">
+                        <div
+                            className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
+                            onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                if (product.seller?.id) router.push(`/user/${product.seller.id}`);
+                            }}
+                        >
                             <div className="w-6 h-6 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center text-[10px] font-black text-zinc-300 overflow-hidden relative">
                                 {product.seller.avatar_url ? (
                                     <Image
@@ -242,7 +250,7 @@ function ProductCardInner({ product, index = 0, onDelete, initialWishlisted = fa
                                     product.seller.full_name?.charAt(0)?.toUpperCase() || '?'
                                 )}
                             </div>
-                            <span className="text-[11px] font-medium text-zinc-400">
+                            <span className="text-[11px] font-medium text-zinc-400 hover:text-white transition-colors">
                                 {product.seller.full_name?.split(' ')[0] || 'Peer'}
                             </span>
                         </div>

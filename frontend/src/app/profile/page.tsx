@@ -305,6 +305,12 @@ export default function ProfilePage() {
                                 <Hash className="w-3.5 h-3.5" />
                                 {srn}
                             </p>
+                            {/* Bio */}
+                            {profile?.bio && (
+                                <p className="text-xs mt-2 leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+                                    {profile.bio}
+                                </p>
+                            )}
                         </div>
 
                         {/* Campus & Branch badges */}
