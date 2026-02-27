@@ -111,26 +111,39 @@ function ProductCardInner({ product, index = 0, onDelete, initialWishlisted = fa
 
         setIsDeleting(true);
         try {
-            await productsApi.delete(product.id);
+            // 1. Get fresh user
+            const { data: { user }, error: userError } = await supabase.auth.getUser();
+            if (userError || !user) throw new Error('Not authenticated');
 
+            // 2. Delete storage images FIRST
             if (product.images && product.images.length > 0) {
                 const paths = product.images.map(url => {
                     const parts = url.split('/product-images/');
                     return parts.length > 1 ? parts[1] : null;
-                }).filter(p => p !== null) as string[];
+                }).filter((p): p is string => p !== null);
 
                 if (paths.length > 0) {
-                    supabase.storage.from('product-images').remove(paths).catch(() => { });
+                    await supabase.storage.from('product-images').remove(paths).catch(() => { });
                 }
             }
 
+            // 3. Delete product row directly
+            const { error } = await supabase
+                .from('products')
+                .delete()
+                .eq('id', product.id)
+                .eq('seller_id', user.id);
+
+            if (error) throw error;
+
+            // 4. Immediately remove from UI
             if (onDelete) {
                 onDelete();
             }
-            setIsDeleting(false);
-        } catch (err) {
-            console.error('Failed to delete product:', err);
-            alert('Failed to delete product. Please try again.');
+        } catch (err: any) {
+            console.error('Delete error:', err.message || err);
+            alert(err.message || 'Failed to delete product');
+        } finally {
             setIsDeleting(false);
         }
     };

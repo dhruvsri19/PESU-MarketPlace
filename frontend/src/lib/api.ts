@@ -211,7 +211,7 @@ export const productsApi = {
         const user = await requireUser();
         const { error } = await supabase
             .from('products')
-            .update({ status: 'deleted' })
+            .delete()
             .eq('id', id)
             .eq('seller_id', user.id);
         if (error) throw error;
