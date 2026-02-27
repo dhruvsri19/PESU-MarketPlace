@@ -89,32 +89,25 @@ export default function SellPage() {
         setImagePreviews(newPreviews);
     };
 
-    const uploadImages = async (): Promise<string[]> => {
+    const uploadImages = async (freshUserId: string): Promise<string[]> => {
         const urls: string[] = [];
         const bucket = 'product-images';
 
         for (let i = 0; i < images.length; i++) {
             const file = images[i];
-            console.log(`[Upload] File ${i + 1}/${images.length}:`, {
-                name: file.name,
-                size: file.size,
-                type: file.type,
-                isFile: file instanceof File,
-            });
 
             if (!file || !(file instanceof File)) {
                 throw new Error(`Invalid file at index ${i} — the image picker didn't pass a real File object`);
             }
 
             const fileExt = file.name.split('.').pop();
-            const fileName = `${user!.id}/${Date.now()}_${Math.random().toString(36).slice(2)}.${fileExt}`;
+            const fileName = `${freshUserId}/${Date.now()}_${Math.random().toString(36).slice(2)}.${fileExt}`;
 
             const { error: uploadError } = await supabase.storage
                 .from(bucket)
                 .upload(fileName, file, { cacheControl: '3600', upsert: false });
 
             if (uploadError) {
-                console.error(`[Upload] FAILED for file ${i + 1}:`, uploadError);
                 throw new Error(`Image upload failed: ${uploadError.message}`);
             }
 
@@ -122,7 +115,6 @@ export default function SellPage() {
                 .from(bucket)
                 .getPublicUrl(fileName);
 
-            console.log(`[Upload] SUCCESS file ${i + 1} → ${publicUrl}`);
             urls.push(publicUrl);
         }
 
@@ -133,15 +125,6 @@ export default function SellPage() {
         e.preventDefault();
         setError('');
 
-        // ── Debug: log all form state ──
-        console.log('[Sell] ── Submit triggered ──');
-        console.log('[Sell] Title:', JSON.stringify(title));
-        console.log('[Sell] Price:', JSON.stringify(price));
-        console.log('[Sell] CategoryId:', JSON.stringify(categoryId));
-        console.log('[Sell] Condition:', JSON.stringify(condition));
-        console.log('[Sell] Description length:', description.length);
-        console.log('[Sell] Images count:', images.length, images.map(f => f?.name));
-
         // Validation
         if (!title.trim()) return setError('Title is required');
         if (!price || parseFloat(price) < 0) return setError('Enter a valid price');
@@ -151,78 +134,77 @@ export default function SellPage() {
         setLoading(true);
 
         try {
+            // ── Fetch fresh user at submit time — never rely on stale state ──
+            const { data: { user: freshUser }, error: userError } = await supabase.auth.getUser();
+
+            if (userError || !freshUser) {
+                setError('Your session has expired. Please sign in again.');
+                router.push('/login');
+                return;
+            }
+
             // ── Session health-check: refresh before any Supabase call ──
-            const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-            console.log('[Sell] Session check:', {
-                hasSession: !!session,
-                userId: session?.user?.id,
-                expiresAt: session?.expires_at ? new Date(session.expires_at * 1000).toISOString() : 'none',
-                error: sessionError?.message,
-            });
+            const { data: { session } } = await supabase.auth.getSession();
 
             if (!session) {
                 setError('Your session has expired. Please sign in again.');
-                setLoading(false);
-                router.push('/auth');
+                router.push('/login');
                 return;
             }
 
             // Try to refresh if token looks stale (within 5 min of expiry or already past)
             const nowSec = Math.floor(Date.now() / 1000);
             if (session.expires_at && session.expires_at - nowSec < 300) {
-                console.log('[Sell] Token expiring soon — forcing refresh…');
                 const { error: refreshError } = await supabase.auth.refreshSession();
                 if (refreshError) {
-                    console.error('[Sell] Refresh FAILED:', refreshError);
                     setError('Session refresh failed. Please sign in again.');
-                    setLoading(false);
-                    router.push('/auth');
+                    router.push('/login');
                     return;
                 }
-                console.log('[Sell] Token refreshed ✓');
             }
 
-            // Upload images FIRST
+            // Upload images FIRST (sequentially, fully awaited before insert)
             let imageUrls: string[] = [];
             if (images.length > 0) {
                 try {
-                    imageUrls = await uploadImages();
-                    console.log('[Sell] All images uploaded:', imageUrls);
+                    imageUrls = await uploadImages(freshUser.id);
                 } catch (uploadErr: any) {
-                    console.error('[Sell] Aborting — upload failure:', uploadErr);
-                    setError(uploadErr.message || 'Image upload failed');
-                    alert('Image upload failed. Please check your connection or file type.');
-                    setLoading(false);
+                    console.error('Image upload error:', uploadErr);
+                    setError(`Image upload failed: ${uploadErr.message || 'Unknown error'}`);
                     return;
                 }
             }
 
-            // Create listing via backend API
-            const payload = {
-                title: title.trim(),
-                description: description.trim(),
-                price: parseFloat(price),
-                category_id: categoryId,
-                condition,
-                images: imageUrls,
-            };
-            console.log('[Sell] API payload:', payload);
+            // Create listing via backend API with 10s timeout
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 10000);
 
-            const { data } = await productsApi.create(payload);
-            console.log('[Sell] API response:', data);
+            try {
+                const payload = {
+                    title: title.trim(),
+                    description: description.trim(),
+                    price: parseFloat(price),
+                    category_id: categoryId,
+                    condition,
+                    images: imageUrls,
+                };
+                const { data } = await productsApi.create(payload, controller.signal);
+                clearTimeout(timeoutId);
 
-            if (data.product) {
-                router.push('/');
+                if (data.product) {
+                    router.push('/');
+                }
+            } catch (apiErr: any) {
+                clearTimeout(timeoutId);
+                if (apiErr.code === 'ERR_CANCELED' || apiErr.name === 'AbortError') {
+                    throw new Error('Request timed out. Please try again.');
+                }
+                throw apiErr;
             }
         } catch (err: any) {
-            console.error('[Sell] Product creation failed:', err);
-            const msg = err.response?.data?.error || err.message || 'Failed to create listing. Please try again.';
-            console.error('[Sell] Error details:', {
-                status: err.response?.status,
-                data: err.response?.data,
-                message: msg,
-            });
-            setError(msg);
+            const msg = err?.response?.data?.error || err?.message || 'Failed to create listing';
+            console.error('Sell page error:', err);
+            setError(`Posting failed: ${msg}`);
         } finally {
             setLoading(false);
         }

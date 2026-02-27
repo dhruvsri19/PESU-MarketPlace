@@ -53,7 +53,9 @@ export function EditProfileModal({ user, profile, isFirstTime, onClose, onUpdate
             onUpdate();
             onClose();
         } catch (err: any) {
-            setError(err.response?.data?.error || 'Failed to save. Please try again.');
+            const msg = err?.response?.data?.error || err?.message || 'Unknown error';
+            console.error('Profile save error:', err);
+            setError(`Save failed: ${msg}`);
         } finally {
             setSaving(false);
         }

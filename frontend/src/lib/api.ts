@@ -37,7 +37,7 @@ export const authApi = {
 export const productsApi = {
     getAll: (params?: Record<string, string>) => api.get('/products', { params }),
     getOne: (id: string) => api.get(`/products/${id}`),
-    create: (data: any) => api.post('/products', data),
+    create: (data: any, signal?: AbortSignal) => api.post('/products', data, { signal }),
     update: (id: string, data: any) => api.put(`/products/${id}`, data),
     delete: (id: string) => api.delete(`/products/${id}`),
 };

@@ -48,7 +48,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
 
     useEffect(() => {
         if (!authLoading && !user) {
-            router.push('/auth');
+            router.push('/login');
             return;
         }
 
@@ -83,7 +83,6 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
 
                 setLoading(false);
             } catch (err) {
-                console.error('Failed to fetch product data:', err);
                 setError('Failed to load product details');
                 setLoading(false);
             }
@@ -132,17 +131,11 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
 
         // Validate product ID
         if (!id) {
-            console.error('[Edit] No product ID provided');
             setError('Missing product ID');
             return;
         }
 
         if (!title.trim() || !price || !categoryId) return setError('Please fill in all required fields');
-
-        // Debug log all form state
-        console.log('[Edit] Submit triggered for product:', id);
-        console.log('[Edit] Title:', title, 'Price:', price, 'Category:', categoryId, 'Condition:', condition);
-        console.log('[Edit] Existing images:', existingImages.length, 'New images:', newImages.length);
 
         setSaving(true);
         try {
@@ -179,16 +172,12 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
                 condition,
                 images: finalImages,
             };
-            console.log('[Edit] API payload:', payload);
-
             await productsApi.update(id, payload);
 
             router.push(`/product/${id}`);
             router.refresh();
         } catch (err: any) {
-            console.error('[Edit] Update failed:', err);
             const msg = err.response?.data?.error || err.message || 'Failed to update listing';
-            console.error('[Edit] Error details:', { status: err.response?.status, data: err.response?.data });
             setError(msg);
         } finally {
             setSaving(false);

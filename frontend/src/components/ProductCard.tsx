@@ -1,8 +1,9 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { Heart, Trash2, Edit } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, memo } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
@@ -51,7 +52,7 @@ const conditionLabels: Record<string, { label: string; color: string }> = {
     poor: { label: 'Poor', color: '#ef4444' },
 };
 
-export function ProductCard({ product, index = 0, onDelete, initialWishlisted = false, onWishlistChange }: ProductCardProps) {
+function ProductCardInner({ product, index = 0, onDelete, initialWishlisted = false, onWishlistChange }: ProductCardProps) {
     const { user } = useAuth();
     const router = useRouter();
     const [isWishlisted, setIsWishlisted] = useState(initialWishlisted);
@@ -145,11 +146,14 @@ export function ProductCard({ product, index = 0, onDelete, initialWishlisted = 
 
             {/* Image */}
             <div className="relative aspect-[4/3] overflow-hidden bg-zinc-950">
-                {product.images && product.images.length > 0 ? (
-                    <img
+                {product.images && product.images.length > 0 && product.images[0] && product.images[0].startsWith('http') ? (
+                    <Image
                         src={product.images[0]}
                         alt={product.title}
-                        className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                        fill
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                        className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                        loading="lazy"
                     />
                 ) : (
                     <div className="w-full h-full flex items-center justify-center text-zinc-700 bg-zinc-900">
@@ -219,9 +223,16 @@ export function ProductCard({ product, index = 0, onDelete, initialWishlisted = 
                 <div className="flex items-center justify-between pt-4 border-t border-zinc-800/50">
                     {product.seller && (
                         <div className="flex items-center gap-2">
-                            <div className="w-6 h-6 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center text-[10px] font-black text-zinc-300 overflow-hidden">
+                            <div className="w-6 h-6 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center text-[10px] font-black text-zinc-300 overflow-hidden relative">
                                 {product.seller.avatar_url ? (
-                                    <img src={product.seller.avatar_url} alt="" className="w-full h-full object-cover" />
+                                    <Image
+                                        src={product.seller.avatar_url}
+                                        alt=""
+                                        fill
+                                        sizes="24px"
+                                        className="object-cover"
+                                        loading="lazy"
+                                    />
                                 ) : (
                                     product.seller.full_name?.charAt(0)?.toUpperCase() || '?'
                                 )}
@@ -242,3 +253,6 @@ export function ProductCard({ product, index = 0, onDelete, initialWishlisted = 
     );
 
 }
+
+// Memoize to prevent unnecessary re-renders when parent re-renders (e.g. category filter change)
+export const ProductCard = memo(ProductCardInner);

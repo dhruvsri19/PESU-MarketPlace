@@ -3,7 +3,6 @@
 import { ReactNode } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { AnimatedAuthWrapper } from '@/components/AnimatedAuthWrapper';
-import { EditProfileModal } from '@/components/EditProfileModal';
 import LoginPage from '@/app/login/page';
 
 interface RootAuthManagerProps {
@@ -11,11 +10,9 @@ interface RootAuthManagerProps {
 }
 
 export function RootAuthManager({ children }: RootAuthManagerProps) {
-    const { user, profile, loading, refreshProfile } = useAuth();
+    const { user, loading } = useAuth();
 
-    const isNewUser = profile && (!profile.full_name || !profile.campus || !profile.branch);
-
-    // Show nothing or a full screen spinner while checking auth status initially
+    // Show spinner while checking auth status
     if (loading) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-black">
@@ -24,7 +21,6 @@ export function RootAuthManager({ children }: RootAuthManagerProps) {
         );
     }
 
-    // If not authenticated, show the login page wrapped in the Framer Motion animation
     return (
         <>
             <AnimatedAuthWrapper isVisible={!user}>
@@ -32,20 +28,7 @@ export function RootAuthManager({ children }: RootAuthManagerProps) {
             </AnimatedAuthWrapper>
 
             {/* Render the Dashboard only if the user is authenticated */}
-            {user && (
-                <>
-                    {isNewUser && (
-                        <EditProfileModal
-                            user={user}
-                            profile={profile}
-                            isFirstTime={true}
-                            onClose={() => { }}
-                            onUpdate={() => { refreshProfile() }}
-                        />
-                    )}
-                    {children}
-                </>
-            )}
+            {user && children}
         </>
     );
 }
