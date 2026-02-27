@@ -126,11 +126,37 @@ export async function createProduct(req: AuthRequest, res: Response): Promise<vo
             return;
         }
 
+        const sellerId = req.user!.id;
+        console.log('[createProduct] seller_id:', sellerId);
+
+        // Ensure seller has a profile row (products.seller_id FK references profiles.id)
+        const { data: profileRow } = await supabaseAdmin
+            .from('profiles')
+            .select('id')
+            .eq('id', sellerId)
+            .single();
+
+        if (!profileRow) {
+            console.log('[createProduct] No profile found for seller, creating one via upsert...');
+            const { data: authData } = await supabaseAdmin.auth.admin.getUserById(sellerId);
+            const { error: upsertError } = await supabaseAdmin
+                .from('profiles')
+                .upsert(
+                    { id: sellerId, email: authData?.user?.email ?? '', full_name: '' },
+                    { onConflict: 'id' }
+                );
+            if (upsertError) {
+                console.error('[createProduct] Profile upsert failed:', upsertError);
+                res.status(400).json({ error: `Cannot create listing: profile setup failed — ${upsertError.message}` });
+                return;
+            }
+        }
+
         const { data, error } = await supabaseAdmin
             .from('products')
             .insert({
                 ...result.data,
-                seller_id: req.user!.id,
+                seller_id: sellerId,
             })
             .select(`
         *,
@@ -140,13 +166,16 @@ export async function createProduct(req: AuthRequest, res: Response): Promise<vo
             .single();
 
         if (error) {
+            console.error('[createProduct] Insert error:', error);
             res.status(400).json({ error: error.message });
             return;
         }
 
         res.status(201).json({ product: data });
     } catch (err) {
-        res.status(500).json({ error: 'Failed to create product' });
+        const message = err instanceof Error ? err.message : 'Failed to create product';
+        console.error('createProduct error:', err);
+        res.status(500).json({ error: message });
     }
 }
 

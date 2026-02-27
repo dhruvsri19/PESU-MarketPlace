@@ -71,8 +71,12 @@ function ProductCardInner({ product, index = 0, onDelete, initialWishlisted = fa
     const handleWishlistToggle = async (e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
+        console.log('[ProductCard Wishlist] Button clicked', product.id);
 
-        if (!user) {
+        // Get fresh user at click time
+        const { data: { user: freshUser }, error: userError } = await supabase.auth.getUser();
+        if (userError || !freshUser) {
+            alert('Please log in first');
             router.push('/login');
             return;
         }
@@ -90,9 +94,10 @@ function ProductCardInner({ product, index = 0, onDelete, initialWishlisted = fa
             setIsWishlisted(data.wishlisted);
             onWishlistChange?.(product.id, data.wishlisted);
         } catch (err) {
-            console.error('Wishlist toggle failed:', err);
+            console.error('[ProductCard Wishlist] Toggle failed:', err);
             // Revert on failure
             setIsWishlisted(!newState);
+            alert('Failed to update wishlist. Please try again.');
         } finally {
             setWishlistLoading(false);
         }

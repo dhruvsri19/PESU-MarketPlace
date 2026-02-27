@@ -126,10 +126,15 @@ export async function updateProfile(req: Request, res: Response): Promise<void> 
         if (semester !== undefined) updatePayload.semester = semester;
 
 
+        // Fetch fresh user to get email (needed for upsert when row doesn't exist yet)
+        const { data: authData } = await supabaseAdmin.auth.admin.getUserById(userId);
+
         const { data, error } = await supabaseAdmin
             .from('profiles')
-            .update(updatePayload)
-            .eq('id', userId)
+            .upsert(
+                { id: userId, email: authData?.user?.email ?? '', ...updatePayload },
+                { onConflict: 'id' }
+            )
             .select()
             .single();
 
@@ -140,6 +145,8 @@ export async function updateProfile(req: Request, res: Response): Promise<void> 
 
         res.json({ profile: data });
     } catch (err) {
-        res.status(500).json({ error: 'Failed to update profile' });
+        const message = err instanceof Error ? err.message : 'Failed to update profile';
+        console.error('updateProfile error:', err);
+        res.status(500).json({ error: message });
     }
 }

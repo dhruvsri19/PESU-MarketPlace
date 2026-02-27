@@ -25,7 +25,6 @@ export const authApi = {
     updateProfile: (data: {
         full_name?: string;
         phone_number?: string;
-        usn?: string;
         branch?: string;
         semester?: number;
         is_onboarded?: boolean;

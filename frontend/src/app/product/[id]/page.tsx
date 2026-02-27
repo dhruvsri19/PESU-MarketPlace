@@ -83,20 +83,31 @@ export default function ProductPage() {
     }, [params.id, user]);
 
     const handleWishlistToggle = async () => {
-        if (!user) {
+        console.log('[Wishlist] Button clicked');
+        // Get fresh user at click time
+        const { data: { user: freshUser }, error: userError } = await supabase.auth.getUser();
+        if (userError || !freshUser) {
+            alert('Please log in first');
             router.push('/login');
             return;
         }
-        setIsWishlisted(!isWishlisted);
+        const prev = isWishlisted;
+        setIsWishlisted(!prev);
         try {
             await wishlistApi.toggle(product.id);
-        } catch {
-            setIsWishlisted(!isWishlisted);
+        } catch (err) {
+            console.error('[Wishlist] Toggle failed:', err);
+            setIsWishlisted(prev);
+            alert('Failed to update wishlist. Please try again.');
         }
     };
 
     const handleChat = async () => {
-        if (!user) {
+        console.log('[Chat] Button clicked');
+        // Get fresh user at click time
+        const { data: { user: freshUser }, error: userError } = await supabase.auth.getUser();
+        if (userError || !freshUser) {
+            alert('Please log in first');
             router.push('/login');
             return;
         }
@@ -104,8 +115,10 @@ export default function ProductPage() {
         try {
             const { data } = await messagesApi.createConversation(product.id);
             router.push(`/messages?conversation=${data.conversation.id}`);
-        } catch {
-            // fallback
+        } catch (err: any) {
+            console.error('[Chat] Create conversation failed:', err);
+            const msg = err?.response?.data?.error || err?.message || 'Failed to start chat';
+            alert(msg);
         } finally {
             setChatLoading(false);
         }

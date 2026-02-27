@@ -163,6 +163,19 @@ export default function SellPage() {
                 }
             }
 
+            // ── Verify seller has a profile row (products.seller_id FK references profiles.id) ──
+            console.log('[Sell] seller_id being used:', freshUser.id);
+            const { data: profileData } = await supabase
+                .from('profiles')
+                .select('id')
+                .eq('id', freshUser.id)
+                .single();
+
+            if (!profileData) {
+                setError('Please complete your profile before posting a listing.');
+                return;
+            }
+
             // Upload images FIRST (sequentially, fully awaited before insert)
             let imageUrls: string[] = [];
             if (images.length > 0) {

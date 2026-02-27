@@ -10,7 +10,7 @@ import { parseCollegeDetails, ParsedCollegeDetails } from '@/utils/college-parse
 import { ProductCard } from '@/components/ProductCard';
 import { EditProfileModal } from '@/components/EditProfileModal';
 import { GlassButton } from '@/components/ui/GlassButton';
-import { LogOut, MapPin, BookOpen, Hash, Package, ArrowRight, Camera, Trash2, X, Pencil } from 'lucide-react';
+import { LogOut, MapPin, BookOpen, Hash, Package, Camera, Trash2, X, Pencil } from 'lucide-react';
 
 /* ── Skeleton Components ── */
 function ProfileHeaderSkeleton() {
@@ -119,6 +119,15 @@ export default function ProfilePage() {
         }
     }, [user, authLoading, router, contextProfile]);
 
+    // Auto-open edit modal for first-time users who need to complete their profile
+    const needsOnboarding = !profile?.full_name || !profile?.campus;
+    useEffect(() => {
+        if (!loading && !authLoading && user && needsOnboarding) {
+            console.log('[Profile] New user detected — profile:', profile, '— forcing edit modal open');
+            setShowEditModal(true);
+        }
+    }, [loading, authLoading, user, profile, needsOnboarding]);
+
     // Callback for EditProfileModal — refetch profile after save
     const refreshProfile = async () => {
         if (!user) return;
@@ -209,7 +218,6 @@ export default function ProfilePage() {
 
     // Determine display values
     // Prefer explicit DB columns -> then parsed values -> then fallbacks
-    const showOnboarding = !profile?.full_name || !profile?.campus || !profile?.branch;
 
     const displayName = profile?.full_name || parsedDetails?.name || 'Student';
     // Campus logic
@@ -299,40 +307,31 @@ export default function ProfilePage() {
                             </p>
                         </div>
 
-                        {/* Badges or Onboarding CTA */}
-                        {showOnboarding ? (
-                            <div className="pt-2">
-                                <GlassButton
-                                    onClick={() => router.push('/onboarding')}
-                                    className="animate-pulse border-[var(--neon-purple)]"
-                                    icon={<ArrowRight className="w-4 h-4" />}
-                                >
-                                    Complete Your Profile
-                                </GlassButton>
+                        {/* Campus & Branch badges */}
+                        <div className="flex flex-wrap gap-3">
+                            <div className="px-3 py-1 rounded-full glass flex items-center gap-2 text-xs font-semibold tracking-wide"
+                                style={{ borderColor: 'var(--neon-blue)', background: 'rgba(59, 130, 246, 0.1)' }}>
+                                <MapPin className="w-3.5 h-3.5 text-blue-400" />
+                                <span className="text-blue-200">
+                                    {campusFull}
+                                </span>
                             </div>
-                        ) : (
-                            <div className="flex flex-wrap gap-3">
-                                <div className="px-3 py-1 rounded-full glass flex items-center gap-2 text-xs font-semibold tracking-wide"
-                                    style={{ borderColor: 'var(--neon-blue)', background: 'rgba(59, 130, 246, 0.1)' }}>
-                                    <MapPin className="w-3.5 h-3.5 text-blue-400" />
-                                    <span className="text-blue-200">
-                                        {campusFull}
-                                    </span>
-                                </div>
 
-                                <div className="px-3 py-1 rounded-full glass flex items-center gap-2 text-xs font-semibold tracking-wide"
-                                    style={{ borderColor: 'var(--neon-purple)', background: 'rgba(168, 85, 247, 0.1)' }}>
-                                    <BookOpen className="w-3.5 h-3.5 text-purple-400" />
-                                    <span className="text-purple-200">
-                                        {displayBranch}
-                                    </span>
-                                </div>
+                            <div className="px-3 py-1 rounded-full glass flex items-center gap-2 text-xs font-semibold tracking-wide"
+                                style={{ borderColor: 'var(--neon-purple)', background: 'rgba(168, 85, 247, 0.1)' }}>
+                                <BookOpen className="w-3.5 h-3.5 text-purple-400" />
+                                <span className="text-purple-200">
+                                    {displayBranch}
+                                </span>
                             </div>
-                        )}
+                        </div>
 
                         <div className="pt-2 flex items-center gap-3">
                             <button
-                                onClick={() => setShowEditModal(true)}
+                                onClick={() => {
+                                    console.log('[Profile] Edit Profile button clicked');
+                                    setShowEditModal(true);
+                                }}
                                 className="text-xs font-medium transition-colors flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-white/5"
                                 style={{ color: 'var(--neon-blue)' }}
                             >
@@ -448,10 +447,11 @@ export default function ProfilePage() {
             )}
 
             {/* Edit Profile Modal */}
-            {showEditModal && user && profile && (
+            {showEditModal && user && (
                 <EditProfileModal
                     user={user}
-                    profile={profile}
+                    profile={profile || { id: user.id, email: user.email }}
+                    isFirstTime={needsOnboarding}
                     onClose={() => setShowEditModal(false)}
                     onUpdate={refreshProfile}
                 />

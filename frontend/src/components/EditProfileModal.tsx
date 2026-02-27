@@ -237,7 +237,7 @@ export function EditProfileModal({ user, profile, isFirstTime, onClose, onUpdate
                         {saving ? (
                             <><Loader2 className="w-4 h-4 animate-spin" /> Saving...</>
                         ) : (
-                            <><Save className="w-4 h-4" /> Save Changes</>
+                            <><Save className="w-4 h-4" /> {isFirstTime ? 'Get Started' : 'Save Changes'}</>
                         )}
                     </button>
                 </div>
