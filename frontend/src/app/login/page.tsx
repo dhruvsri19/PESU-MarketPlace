@@ -9,6 +9,7 @@ import { ShieldCheck, Mail, ArrowRight, Sparkles, AlertCircle, KeyRound } from '
 
 type OtpStage = 'email' | 'otp';
 
+
 export default function LoginPage() {
     const { user } = useAuth();
 
@@ -20,9 +21,10 @@ export default function LoginPage() {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
 
-    // If already logged in, show nothing (RootAuthManager will handle rendering)
+
     if (user) return null;
 
+    // ─── OTP Handlers (untouched) ────────────────────────────────
     const handleSendOtp = async () => {
         if (!email.trim()) return setError('Please enter your email');
         if (!email.endsWith('@pes.edu') && !email.endsWith('@stu.pes.edu')) {
@@ -60,13 +62,14 @@ export default function LoginPage() {
                 type: 'email',
             });
             if (verifyError) throw verifyError;
-            // Auth state change will be picked up by AuthContext
         } catch (err: any) {
             setError(err.message || 'Invalid OTP');
         } finally {
             setLoading(false);
         }
     };
+
+    // No PESU handler or tab switch needed
 
     return (
         <div className="min-h-screen flex flex-col items-center justify-center p-4 relative overflow-hidden">
@@ -88,11 +91,10 @@ export default function LoginPage() {
                         PESU MARKETPLACE
                     </h1>
                     <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
-                        Sign in with your college email to start trading
+                        Sign in to start trading with your peers
                     </p>
                 </div>
 
-                {/* OTP Form */}
                 <div className="space-y-5">
                     {otpStage === 'email' ? (
                         <>
@@ -117,7 +119,6 @@ export default function LoginPage() {
                         </>
                     ) : (
                         <>
-                            {/* Email display */}
                             <div className="flex items-center gap-3 p-3 rounded-xl"
                                 style={{ background: 'rgba(59, 130, 246, 0.08)', border: '1px solid rgba(59, 130, 246, 0.15)' }}>
                                 <Mail className="w-4 h-4 text-blue-400 shrink-0" />
@@ -152,28 +153,28 @@ export default function LoginPage() {
                             </GlassButton>
                         </>
                     )}
-
-                    {/* Status Messages */}
-                    {error && (
-                        <div className="flex items-start gap-2.5 p-3 rounded-xl text-xs animate-fade-in"
-                            style={{ background: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.15)' }}>
-                            <AlertCircle className="w-4 h-4 text-red-400 shrink-0 mt-px" />
-                            <span className="text-red-300">{error}</span>
-                        </div>
-                    )}
-
-                    {success && (
-                        <div className="flex items-start gap-2.5 p-3 rounded-xl text-xs animate-fade-in"
-                            style={{ background: 'rgba(16, 185, 129, 0.08)', border: '1px solid rgba(16, 185, 129, 0.15)' }}>
-                            <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0 mt-px" />
-                            <span className="text-emerald-300">{success}</span>
-                        </div>
-                    )}
                 </div>
+
+                {/* Status Messages */}
+                {error && (
+                    <div className="flex items-start gap-2.5 p-3 rounded-xl text-xs animate-fade-in mt-5"
+                        style={{ background: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.15)' }}>
+                        <AlertCircle className="w-4 h-4 text-red-400 shrink-0 mt-px" />
+                        <span className="text-red-300">{error}</span>
+                    </div>
+                )}
+
+                {success && (
+                    <div className="flex items-start gap-2.5 p-3 rounded-xl text-xs animate-fade-in mt-5"
+                        style={{ background: 'rgba(16, 185, 129, 0.08)', border: '1px solid rgba(16, 185, 129, 0.15)' }}>
+                        <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0 mt-px" />
+                        <span className="text-emerald-300">{success}</span>
+                    </div>
+                )}
 
                 {/* Footer */}
                 <p className="text-center text-[11px] mt-8" style={{ color: 'var(--text-muted)' }}>
-                    Only PES University email addresses are accepted.
+                    Only PES University students can access this marketplace.
                 </p>
             </div>
         </div>

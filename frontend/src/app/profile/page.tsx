@@ -71,18 +71,15 @@ export default function ProfilePage() {
             if (!user) return;
 
             try {
-                // Use context profile if already available, otherwise fetch
-                let profileData = contextProfile;
-                if (!profileData) {
-                    const { data } = await supabase
-                        .from('profiles')
-                        .select('*')
-                        .eq('id', user.id)
-                        .single();
-                    profileData = data;
-                }
+                // Always fetch fresh from DB to ensure PESU profile data is available
+                const { data: profileData } = await supabase
+                    .from('profiles')
+                    .select('*')
+                    .eq('id', user.id)
+                    .single();
 
                 if (profileData) {
+                    console.log('[ProfilePage] Fetched profile:', profileData);
                     setProfile(profileData);
                     setAvatarUrl(profileData.avatar_url || null);
                     // Parse the full name string if available and campus/branch are missing
@@ -230,7 +227,6 @@ export default function ProfilePage() {
     const displayBranch = profile?.branch || parsedDetails?.branch || 'Unknown Branch';
 
     const initials = displayName.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase();
-    const srn = profile?.srn || user.email?.split('@')[0].toUpperCase();
 
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fade-in">
@@ -300,11 +296,6 @@ export default function ProfilePage() {
                             <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight mb-1">
                                 {displayName}
                             </h1>
-                            {/* Secondary SRN Text */}
-                            <p className="text-sm font-medium flex items-center gap-2" style={{ color: 'var(--text-muted)' }}>
-                                <Hash className="w-3.5 h-3.5" />
-                                {srn}
-                            </p>
                             {/* Bio */}
                             {profile?.bio && (
                                 <p className="text-xs mt-2 leading-relaxed" style={{ color: 'var(--text-secondary)' }}>

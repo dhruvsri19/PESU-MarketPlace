@@ -9,7 +9,7 @@ import { wishlistApi, messagesApi } from '@/lib/api';
 import { supabase } from '@/lib/supabase';
 import {
     ArrowLeft, Heart, MessageCircle, Share2, MapPin,
-    Eye, Clock, Tag, ChevronLeft, ChevronRight, ShieldCheck, AlertTriangle
+    Eye, Clock, Tag, ChevronLeft, ChevronRight, ShieldCheck, AlertTriangle, Edit
 } from 'lucide-react';
 
 const conditionMap: Record<string, { label: string; color: string; desc: string }> = {
@@ -321,22 +321,28 @@ export default function ProductPage() {
                             </GlassButton>
                         ) : (
                             <GlassButton
-                                variant="glass"
+                                variant="primary"
                                 size="lg"
                                 className="flex-1"
-                                disabled
+                                icon={<Edit className="w-5 h-5" />}
+                                onClick={() => {
+                                    console.log('[ProductPage] Edit button clicked, navigating to /edit/', product.id);
+                                    router.push(`/edit/${product.id}`);
+                                }}
                             >
-                                This is your listing
+                                Edit Listing
                             </GlassButton>
                         )}
-                        <GlassButton
-                            variant="glass"
-                            size="lg"
-                            onClick={handleWishlistToggle}
-                            icon={<Heart className="w-5 h-5" fill={isWishlisted ? '#ec4899' : 'none'} stroke={isWishlisted ? '#ec4899' : 'currentColor'} />}
-                        >
-                            {''}
-                        </GlassButton>
+                        {!isSeller && (
+                            <GlassButton
+                                variant="glass"
+                                size="lg"
+                                onClick={handleWishlistToggle}
+                                icon={<Heart className="w-5 h-5" fill={isWishlisted ? '#ec4899' : 'none'} stroke={isWishlisted ? '#ec4899' : 'currentColor'} />}
+                            >
+                                {''}
+                            </GlassButton>
+                        )}
                         <GlassButton
                             variant="glass"
                             size="lg"

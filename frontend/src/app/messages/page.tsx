@@ -142,10 +142,24 @@ function MessagesPageContent() {
                 const { data } = await messagesApi.getMessages(activeConvId!);
                 if (!cancelled) {
                     setMessages(data.messages ?? []);
-                    // clear unread indicator
+                    // clear unread indicator locally
                     setConversations(prev =>
                         prev.map(c => c.id === activeConvId ? { ...c, _unread: false } : c),
                     );
+                }
+
+                // Mark all messages in this conversation as read in Supabase
+                // This is what the navbar's getUnreadCount actually queries (is_read=false)
+                if (user) {
+                    supabase
+                        .from('messages')
+                        .update({ is_read: true })
+                        .eq('conversation_id', activeConvId!)
+                        .eq('is_read', false)
+                        .neq('sender_id', user.id)
+                        .then(({ error }) => {
+                            if (error) console.warn('[Chat] Failed to mark messages as read:', error.message);
+                        });
                 }
             } catch (err) {
                 console.error('[Chat] Failed to load messages:', err);
@@ -155,7 +169,7 @@ function MessagesPageContent() {
         }
         loadMessages();
         return () => { cancelled = true; };
-    }, [activeConvId]);
+    }, [activeConvId, user]);
 
     /* ────────── 4. Scroll to bottom on new messages ──────── */
     useEffect(() => {

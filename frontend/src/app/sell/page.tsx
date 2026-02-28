@@ -73,6 +73,14 @@ export default function SellPage() {
             return;
         }
 
+        // Reject images over 2MB — large images cause uploads to hang
+        for (const file of files) {
+            if (file.size > 2 * 1024 * 1024) {
+                setError(`"${file.name}" is over 2MB. Please compress it before uploading.`);
+                return;
+            }
+        }
+
         const newImages = [...images, ...files].slice(0, 5);
         setImages(newImages);
 

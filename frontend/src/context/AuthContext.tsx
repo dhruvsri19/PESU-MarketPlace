@@ -42,41 +42,58 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!force && profileFetchedForRef.current === userId && profile) return;
 
         try {
-            const { data } = await supabase
+            const { data, error } = await supabase
                 .from('profiles')
                 .select('*')
                 .eq('id', userId)
                 .single();
-            console.log('[AuthContext] Profile query result for', userId, ':', data);
-            setProfile(data);
+
+            console.log('[AuthContext] Profile query for', userId, '→', data, 'error:', error);
+
+            if (error || !data) {
+                // No profile row at all → new user
+                console.log('[AuthContext] No profile found → isNewUser = true');
+                setProfile(null);
+                setIsNewUser(true);
+                return;
+            }
+
+            setProfile({ ...data, id: userId });
             profileFetchedForRef.current = userId;
 
             // Detect new user: no profile row or empty full_name
-            const needsSetup = !data || !data.full_name;
-            console.log('[AuthContext] isNewUser =', needsSetup);
-            setIsNewUser(needsSetup);
-        } catch {
-            // No profile row at all → new user
-            console.log('[AuthContext] No profile found for', userId, '→ isNewUser = true');
+            const isNew = !data.full_name || !data.campus;
+            console.log('[AuthContext] full_name:', data.full_name, 'campus:', data.campus, '→ isNewUser:', isNew);
+            setIsNewUser(isNew);
+        } catch (err) {
+            console.error('[AuthContext] fetchProfile exception:', err);
             setIsNewUser(true);
         }
     }, [profile]);
 
     useEffect(() => {
-        // Get initial session
-        supabase.auth.getSession().then(({ data: { session } }) => {
-            setSession(session);
-            setUser(session?.user ?? null);
-            if (session?.user) {
-                fetchProfile(session.user.id, true).finally(() => setLoading(false));
-            } else {
-                setLoading(false);
+        // Get initial session — no aggressive refresh
+        const initSession = async () => {
+            try {
+                const { data: { session } } = await supabase.auth.getSession();
+
+                if (session?.user) {
+                    setSession(session);
+                    setUser(session.user);
+                    await fetchProfile(session.user.id, true);
+                }
+            } catch (err) {
+                console.error('[AuthContext] Session init error:', err);
             }
-        });
+            setLoading(false);
+        };
+
+        initSession();
 
         // Listen for auth changes
         const { data: { subscription } } = supabase.auth.onAuthStateChange(
             async (event, session) => {
+                console.log('[AuthContext] onAuthStateChange:', event);
                 setSession(session);
                 setUser(session?.user ?? null);
 
@@ -89,10 +106,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 } else if (event === 'SIGNED_OUT') {
                     setProfile(null);
                     profileFetchedForRef.current = null;
+                    setIsNewUser(false);
                     setLoading(false);
                     router.refresh();
                 } else if (event === 'TOKEN_REFRESHED') {
-                    // Token refresh is routine — no router.refresh(), no profile re-fetch
+                    setLoading(false);
+                } else if (event === 'USER_UPDATED') {
+                    if (session?.user) {
+                        await fetchProfile(session.user.id, true);
+                    }
                     setLoading(false);
                 }
             }
