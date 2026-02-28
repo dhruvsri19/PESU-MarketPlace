@@ -15,8 +15,20 @@ export function RootAuthManager({ children }: RootAuthManagerProps) {
     // Show spinner while checking auth status
     if (loading) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-black">
-                <div className="w-8 h-8 border-2 border-white/20 border-t-[var(--neon-purple)] rounded-full animate-spin" />
+            <div style={{
+                minHeight: '100vh',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: '#1a1a1a',
+            }}>
+                <div style={{
+                    width: '34px', height: '34px',
+                    border: '3px solid rgba(255,107,43,0.15)',
+                    borderTopColor: '#ff6b2b',
+                    borderRadius: '50%',
+                    animation: 'spin 0.8s linear infinite',
+                }} />
             </div>
         );
     }

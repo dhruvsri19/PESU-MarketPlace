@@ -240,7 +240,7 @@ export default function SellPage() {
     }
 
     return (
-        <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8">
+        <div className="max-w-2xl mx-auto px-4 sm:px-6 pt-8 pb-32">
             {/* Background accents */}
             <div className="fixed inset-0 overflow-hidden pointer-events-none">
                 <div className="absolute top-1/3 right-1/4 w-80 h-80 rounded-full opacity-15"

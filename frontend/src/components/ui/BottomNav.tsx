@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { Home, Heart, MessageCircle, PlusCircle, User } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
+import { motion } from 'framer-motion';
 import { messagesApi } from '@/lib/api';
 import { supabase } from '@/lib/supabase';
 
@@ -13,39 +14,23 @@ export function BottomNav() {
     const pathname = usePathname();
     const [unreadCount, setUnreadCount] = useState(0);
 
-    /* ── Fetch unread count ── */
     const fetchUnread = useCallback(async () => {
         if (!user) { setUnreadCount(0); return; }
         try {
             const { data } = await messagesApi.getUnreadCount();
             setUnreadCount(data.unread_count ?? 0);
-        } catch {
-            // silently fail
-        }
+        } catch { }
     }, [user]);
 
-    useEffect(() => {
-        fetchUnread();
-    }, [fetchUnread]);
+    useEffect(() => { fetchUnread(); }, [fetchUnread]);
 
-    /* ── Realtime: re-fetch count on new messages ── */
     useEffect(() => {
         if (!user) return;
-
         const channel = supabase
-            .channel('bottom-nav-unread')
-            .on(
-                'postgres_changes',
-                { event: 'INSERT', schema: 'public', table: 'messages' },
-                () => { fetchUnread(); },
-            )
-            .on(
-                'postgres_changes',
-                { event: 'UPDATE', schema: 'public', table: 'messages' },
-                () => { fetchUnread(); },
-            )
+            .channel('bottom-nav-unread-orange')
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, fetchUnread)
+            .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'messages' }, fetchUnread)
             .subscribe();
-
         return () => { supabase.removeChannel(channel); };
     }, [user, fetchUnread]);
 
@@ -53,59 +38,100 @@ export function BottomNav() {
 
     const navItems = [
         { label: 'Home', icon: Home, href: '/' },
-        { label: 'Saved', icon: Heart, href: '/wishlist', color: 'var(--neon-pink)' },
-        { label: 'Sell', icon: PlusCircle, href: '/sell', color: 'var(--neon-purple)', isCenter: true },
-        { label: 'Messages', icon: MessageCircle, href: '/messages', color: 'var(--neon-blue)', hasBadge: true },
+        { label: 'Saved', icon: Heart, href: '/wishlist' },
+        { label: 'Sell', icon: PlusCircle, href: '/sell', isCenter: true },
+        { label: 'Chat', icon: MessageCircle, href: '/messages', hasBadge: true },
         { label: 'Profile', icon: User, href: '/profile' },
     ];
 
     return (
-        <div className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] w-[90%] max-w-[400px]">
-            <nav className="glass-heavy rounded-2xl p-2 flex items-center justify-between shadow-2xl border border-white/10">
-                {navItems.map((item) => {
-                    const isActive = pathname === item.href;
+        <div
+            className="md:hidden"
+            style={{
+                position: 'fixed',
+                bottom: '16px',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                zIndex: 100,
+                width: '92%',
+                maxWidth: '380px',
+                display: 'flex',  // will be overridden by CSS .md:hidden if Tailwind works, otherwise always shows — OK
+            }}
+        >
+            <nav style={{
+                width: '100%',
+                background: '#1e1e1e',
+                border: '1px solid rgba(255,255,255,0.07)',
+                borderRadius: '20px',
+                padding: '10px 6px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-around',
+                boxShadow: '0 8px 40px rgba(0,0,0,0.5)',
+            }}>
+                {navItems.map(item => {
+                    const isActive = item.href === '/' ? pathname === '/' : pathname.startsWith(item.href);
                     const Icon = item.icon;
 
                     return (
                         <Link
                             key={item.href}
                             href={item.href}
-                            className={`
-                                relative flex flex-col items-center justify-center transition-all duration-200
-                                ${item.isCenter ? 'p-3 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-600 shadow-lg -translate-y-4' : 'flex-1 p-2'}
-                            `}
+                            style={{
+                                position: 'relative',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '3px',
+                                padding: '6px 10px',
+                                textDecoration: 'none',
+                            }}
                         >
-                            <Icon
-                                className={`w-6 h-6 ${isActive && !item.isCenter ? 'scale-110' : ''}`}
-                                style={{
-                                    color: isActive || item.isCenter ? (item.isCenter ? 'white' : 'var(--text-primary)') : 'var(--text-muted)',
-                                    fill: isActive && item.href === '/wishlist' ? item.color : 'none'
-                                }}
-                            />
-
-                            {!item.isCenter && (
-                                <span className="text-[10px] mt-1 font-medium"
-                                    style={{ color: isActive ? 'var(--text-primary)' : 'var(--text-muted)' }}>
-                                    {item.label}
-                                </span>
-                            )}
-
-                            {item.hasBadge && unreadCount > 0 && (
-                                <span
-                                    className="absolute top-1 right-2 min-w-[16px] h-[16px] flex items-center justify-center
-                                        rounded-full text-[9px] font-bold leading-none px-1 animate-fade-in"
+                            {item.isCenter ? (
+                                <motion.div
+                                    whileHover={{ scale: 1.08 }}
+                                    whileTap={{ scale: 0.92 }}
                                     style={{
-                                        background: '#ef4444',
-                                        color: 'white',
-                                        boxShadow: '0 0 8px rgba(239,68,68,0.5)',
+                                        width: '48px', height: '48px',
+                                        borderRadius: '14px',
+                                        background: '#ff6b2b',
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                        boxShadow: '0 4px 18px rgba(255,107,43,0.45)',
+                                        transform: 'translateY(-8px)',
                                     }}
                                 >
+                                    <Icon style={{ width: '22px', height: '22px', color: '#fff' }} />
+                                </motion.div>
+                            ) : (
+                                <>
+                                    <Icon style={{
+                                        width: '18px', height: '18px',
+                                        color: isActive ? '#ff6b2b' : '#3a3a3a',
+                                        transition: 'color 130ms ease',
+                                    }} />
+                                    <span style={{
+                                        fontFamily: "'Syne', sans-serif",
+                                        fontSize: '0.5rem', fontWeight: 700,
+                                        textTransform: 'uppercase',
+                                        color: isActive ? '#ff6b2b' : '#3a3a3a',
+                                        transition: 'color 130ms ease',
+                                    }}>
+                                        {item.label}
+                                    </span>
+                                </>
+                            )}
+                            {item.hasBadge && unreadCount > 0 && (
+                                <span style={{
+                                    position: 'absolute', top: '2px', right: '4px',
+                                    background: '#ff6b2b', color: '#fff',
+                                    fontSize: '0.5rem', fontWeight: 800,
+                                    borderRadius: '999px', minWidth: '14px', height: '14px',
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    padding: '0 3px',
+                                }}>
                                     {unreadCount > 9 ? '9+' : unreadCount}
                                 </span>
-                            )}
-
-                            {isActive && !item.isCenter && (
-                                <div className="absolute -bottom-1 w-1 h-1 rounded-full bg-white/40" />
                             )}
                         </Link>
                     );

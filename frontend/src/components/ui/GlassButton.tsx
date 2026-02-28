@@ -1,6 +1,7 @@
 'use client';
 
 import { ButtonHTMLAttributes, ReactNode } from 'react';
+import { motion } from 'framer-motion';
 
 interface GlassButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
     variant?: 'primary' | 'glass' | 'ghost';
@@ -18,39 +19,79 @@ export function GlassButton({
     children,
     className = '',
     disabled,
+    style,
+    onClick,
     ...props
 }: GlassButtonProps) {
-    const sizeClasses = {
-        sm: 'px-3 py-1.5 text-xs',
-        md: 'px-5 py-2.5 text-sm',
-        lg: 'px-7 py-3.5 text-base',
+    const sizeStyles: Record<string, React.CSSProperties> = {
+        sm: { padding: '7px 18px', fontSize: '0.72rem' },
+        md: { padding: '10px 24px', fontSize: '0.8rem' },
+        lg: { padding: '14px 32px', fontSize: '0.875rem' },
     };
 
-    const variantClasses = {
-        primary: 'bg-white text-black hover:opacity-90 active:scale-[0.98] transition-all rounded-xl shadow-lg',
-        glass: 'bg-zinc-800/80 border border-zinc-700 text-zinc-200 hover:bg-zinc-700 hover:text-white active:scale-[0.98] backdrop-blur-md transition-all rounded-xl',
-        ghost: 'bg-transparent border-none text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800/50 rounded-xl transition-all cursor-pointer',
+    const variantStyles: Record<string, React.CSSProperties> = {
+        primary: {
+            background: '#ff6b2b',
+            color: '#ffffff',
+            border: 'none',
+            fontWeight: 700,
+            fontFamily: "'Syne', sans-serif",
+            textTransform: 'uppercase' as const,
+            letterSpacing: '0.05em',
+            boxShadow: '0 4px 20px rgba(255,107,43,0.3)',
+        },
+        glass: {
+            background: 'rgba(255,255,255,0.05)',
+            color: '#a0a0a0',
+            border: '1.5px solid rgba(255,255,255,0.1)',
+            fontWeight: 600,
+            fontFamily: "'Inter', sans-serif",
+        },
+        ghost: {
+            background: 'transparent',
+            color: '#666',
+            border: 'none',
+            fontWeight: 500,
+            fontFamily: "'Inter', sans-serif",
+        },
     };
-
 
     return (
-        <button
-            className={`
-        ${variantClasses[variant]}
-        ${sizeClasses[size]}
-        inline-flex items-center justify-center gap-2 font-medium
-        ${loading || disabled ? 'opacity-50 cursor-not-allowed' : ''}
-        ${className}
-      `}
+        <motion.button
+            whileHover={!disabled && !loading ? {
+                scale: 1.03,
+                boxShadow: variant === 'primary' ? '0 6px 28px rgba(255,107,43,0.5)' : undefined
+            } : {}}
+            whileTap={!disabled && !loading ? { scale: 0.97 } : {}}
+            style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                borderRadius: '999px',
+                cursor: (loading || disabled) ? 'not-allowed' : 'pointer',
+                opacity: (loading || disabled) ? 0.4 : 1,
+                transition: 'box-shadow 140ms ease, opacity 140ms ease',
+                whiteSpace: 'nowrap',
+                ...sizeStyles[size],
+                ...variantStyles[variant],
+                ...style,
+            }}
             disabled={loading || disabled}
-            {...props}
+            onClick={onClick}
+            className={className}
+            {...(props as any)}
         >
             {loading ? (
-                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-            ) : icon ? (
-                icon
-            ) : null}
+                <div style={{
+                    width: '15px', height: '15px',
+                    border: '2px solid rgba(255,255,255,0.25)',
+                    borderTopColor: '#fff',
+                    borderRadius: '50%',
+                    animation: 'spin 0.7s linear infinite',
+                }} />
+            ) : icon ? icon : null}
             {children}
-        </button>
+        </motion.button>
     );
 }

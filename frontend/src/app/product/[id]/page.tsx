@@ -128,7 +128,7 @@ export default function ProductPage() {
         if (navigator.share) {
             await navigator.share({
                 title: product.title,
-                text: `Check out "${product.title}" on UniMart — ₹${product.price}`,
+                text: `Check out "${product.title}" on MarketPlace — ₹${product.price}`,
                 url: window.location.href,
             });
         } else {

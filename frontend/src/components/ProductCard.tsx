@@ -4,10 +4,11 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Heart, Trash2, Edit } from 'lucide-react';
 import { useState, useEffect, memo } from 'react';
+import { motion } from 'framer-motion';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
-import { productsApi, wishlistApi } from '@/lib/api';
+import { wishlistApi } from '@/lib/api';
 
 interface ProductCardProps {
     product: {
@@ -18,15 +19,8 @@ interface ProductCardProps {
         condition: string;
         created_at: string;
         views_count: number;
-        seller?: {
-            id: string;
-            full_name: string;
-            avatar_url: string;
-        };
-        category?: {
-            name: string;
-            icon: string;
-        };
+        seller?: { id: string; full_name: string; avatar_url: string; };
+        category?: { name: string; icon: string; };
         seller_id?: string;
     };
     index?: number;
@@ -44,12 +38,12 @@ function timeAgo(dateStr: string): string {
     return new Date(dateStr).toLocaleDateString();
 }
 
-const conditionLabels: Record<string, { label: string; color: string }> = {
-    new: { label: 'New', color: '#10b981' },
-    like_new: { label: 'Like New', color: '#06b6d4' },
-    good: { label: 'Good', color: '#3b82f6' },
-    fair: { label: 'Fair', color: '#f59e0b' },
-    poor: { label: 'Poor', color: '#ef4444' },
+const condBadge: Record<string, { label: string; bg: string; color: string }> = {
+    new: { label: 'New', bg: 'rgba(255,107,43,0.15)', color: '#ff6b2b' },
+    like_new: { label: 'Like New', bg: '#ff6b2b', color: '#fff' },
+    good: { label: 'Good', bg: 'rgba(255,255,255,0.08)', color: '#aaa' },
+    fair: { label: 'Fair', bg: 'rgba(255,255,255,0.06)', color: '#888' },
+    poor: { label: 'Poor', bg: 'rgba(255,255,255,0.05)', color: '#666' },
 };
 
 function ProductCardInner({ product, index = 0, onDelete, initialWishlisted = false, onWishlistChange }: ProductCardProps) {
@@ -58,227 +52,231 @@ function ProductCardInner({ product, index = 0, onDelete, initialWishlisted = fa
     const [isWishlisted, setIsWishlisted] = useState(initialWishlisted);
     const [wishlistLoading, setWishlistLoading] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
-    const cond = conditionLabels[product.condition] || conditionLabels.good;
+    const [hovered, setHovered] = useState(false);
 
-    // Sync if parent changes the initial value
-    useEffect(() => {
-        setIsWishlisted(initialWishlisted);
-    }, [initialWishlisted]);
+    useEffect(() => { setIsWishlisted(initialWishlisted); }, [initialWishlisted]);
 
-    // Check if current user is the owner
-    const isOwner = user && (user.id === product.seller_id || (product.seller && user.id === product.seller.id));
+    const isOwner = user && (
+        user.id === product.seller_id ||
+        (product.seller && user.id === product.seller.id)
+    );
+
+    const cond = condBadge[product.condition] || condBadge.good;
 
     const handleWishlistToggle = async (e: React.MouseEvent) => {
-        e.preventDefault();
-        e.stopPropagation();
-        console.log('[ProductCard Wishlist] Button clicked', product.id);
-
-        // Get fresh user at click time
-        const { data: { user: freshUser }, error: userError } = await supabase.auth.getUser();
-        if (userError || !freshUser) {
-            alert('Please log in first');
-            router.push('/login');
-            return;
-        }
-
+        e.preventDefault(); e.stopPropagation();
+        const { data: { user: freshUser }, error } = await supabase.auth.getUser();
+        if (error || !freshUser) { alert('Please log in first'); router.push('/login'); return; }
         if (wishlistLoading) return;
-
-        // Optimistic UI — flip state instantly
         const newState = !isWishlisted;
         setIsWishlisted(newState);
         setWishlistLoading(true);
-
         try {
             const { data } = await wishlistApi.toggle(product.id);
-            // Server confirms actual state
             setIsWishlisted(data.wishlisted);
             onWishlistChange?.(product.id, data.wishlisted);
-        } catch (err) {
-            console.error('[ProductCard Wishlist] Toggle failed:', err);
-            // Revert on failure
+        } catch {
             setIsWishlisted(!newState);
-            alert('Failed to update wishlist. Please try again.');
         } finally {
             setWishlistLoading(false);
         }
     };
 
     const handleDelete = async (e: React.MouseEvent) => {
-        e.preventDefault();
-        e.stopPropagation();
-
-        if (!confirm('Are you sure you want to delete this listing? This cannot be undone.')) return;
-
+        e.preventDefault(); e.stopPropagation();
+        if (!confirm('Delete this listing?')) return;
         setIsDeleting(true);
         try {
-            // 1. Get fresh user
-            const { data: { user }, error: userError } = await supabase.auth.getUser();
-            if (userError || !user) throw new Error('Not authenticated');
-
-            // 2. Delete storage images FIRST
-            if (product.images && product.images.length > 0) {
+            const { data: { user }, error } = await supabase.auth.getUser();
+            if (error || !user) throw new Error('Not authenticated');
+            if (product.images?.length) {
                 const paths = product.images.map(url => {
                     const parts = url.split('/product-images/');
                     return parts.length > 1 ? parts[1] : null;
                 }).filter((p): p is string => p !== null);
-
-                if (paths.length > 0) {
-                    await supabase.storage.from('product-images').remove(paths).catch(() => { });
-                }
+                if (paths.length) await supabase.storage.from('product-images').remove(paths).catch(() => { });
             }
-
-            // 3. Delete product row directly
-            const { error } = await supabase
-                .from('products')
-                .delete()
-                .eq('id', product.id)
-                .eq('seller_id', user.id);
-
-            if (error) throw error;
-
-            // 4. Immediately remove from UI
-            if (onDelete) {
-                onDelete();
-            }
+            const { error: delErr } = await supabase.from('products').delete().eq('id', product.id).eq('seller_id', user.id);
+            if (delErr) throw delErr;
+            onDelete?.();
         } catch (err: any) {
-            console.error('Delete error:', err.message || err);
-            alert(err.message || 'Failed to delete product');
+            alert(err.message || 'Failed to delete');
         } finally {
             setIsDeleting(false);
         }
     };
 
     return (
-        <Link href={`/product/${product.id}`}
-            className={`glass-card group block overflow-hidden relative border border-zinc-800 bg-zinc-900/50 backdrop-blur-md transition-all duration-300 hover:border-zinc-600 hover:shadow-[inset_0_0_20px_rgba(255,255,255,0.02)] ${isDeleting ? 'pointer-events-none opacity-50' : ''}`}
-            style={{ animationDelay: `${index * 0.05}s` }}>
-
-            {/* Deleting overlay */}
-            {isDeleting && (
-                <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/40 backdrop-blur-sm rounded-xl">
-                    <div className="flex flex-col items-center gap-2">
-                        <div className="w-6 h-6 border-2 border-white/20 border-t-red-400 rounded-full animate-spin" />
-                        <span className="text-xs font-medium text-red-300">Deleting…</span>
-                    </div>
-                </div>
-            )}
-
-            {/* Image */}
-            <div className="relative aspect-[4/3] overflow-hidden bg-zinc-950">
-                {product.images && product.images.length > 0 && product.images[0] && product.images[0].startsWith('http') ? (
-                    <Image
-                        src={product.images[0]}
-                        alt={product.title}
-                        fill
-                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                        className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
-                        loading="lazy"
-                    />
-                ) : (
-                    <div className="w-full h-full flex items-center justify-center text-zinc-700 bg-zinc-900">
-                        <span className="text-4xl opacity-20">📦</span>
-                    </div>
-                )}
-
-                {/* Actions: Wishlist OR Edit/Delete */}
-                <div className="absolute top-3 right-3 flex gap-2 z-10">
-                    {isOwner ? (
-                        <>
-                            <button
-                                onClick={(e) => {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    router.push(`/edit/${product.id}`);
+        <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.35, delay: index * 0.06 }}
+            style={{ opacity: isDeleting ? 0.4 : 1, pointerEvents: isDeleting ? 'none' : 'auto' }}
+        >
+            <Link
+                href={`/product/${product.id}`}
+                style={{ display: 'block', textDecoration: 'none', cursor: 'pointer' }}
+            >
+                <motion.div
+                    onHoverStart={() => setHovered(true)}
+                    onHoverEnd={() => setHovered(false)}
+                    whileHover={{ y: -4 }}
+                    style={{
+                        background: '#242424',
+                        border: `1px solid ${hovered ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.06)'}`,
+                        borderRadius: '12px',
+                        overflow: 'hidden',
+                        transition: 'border-color 200ms ease',
+                    }}
+                >
+                    {/* Image */}
+                    <div style={{ position: 'relative', aspectRatio: '4/3', overflow: 'hidden' }}>
+                        {product.images?.[0]?.startsWith('http') ? (
+                            <Image
+                                src={product.images[0]}
+                                alt={product.title}
+                                fill
+                                sizes="(max-width:768px) 50vw, 25vw"
+                                style={{
+                                    objectFit: 'cover',
+                                    transform: hovered ? 'scale(1.05)' : 'scale(1)',
+                                    transition: 'transform 380ms ease',
                                 }}
-                                className="p-2 rounded-full bg-zinc-900/80 border border-zinc-700/50 backdrop-blur-md hover:bg-zinc-800/80 transition-all text-zinc-400 hover:text-white"
-                            >
-                                <Edit className="w-4 h-4" />
-                            </button>
-                            <button
-                                onClick={handleDelete}
-                                disabled={isDeleting}
-                                className="p-2 rounded-full bg-zinc-900/80 border border-zinc-700/50 backdrop-blur-md hover:bg-red-500/20 transition-all text-zinc-400 hover:text-red-400 disabled:opacity-50"
-                            >
-                                <Trash2 className="w-4 h-4" />
-                            </button>
-                        </>
-                    ) : (
-                        <button
-                            onClick={handleWishlistToggle}
-                            disabled={wishlistLoading}
-                            className={`p-2 rounded-full bg-zinc-900/80 border border-zinc-700/50 backdrop-blur-md transition-all duration-300 hover:scale-110 ${isWishlisted ? 'text-pink-500 border-pink-500/30' : 'text-zinc-400'}`}>
-                            <Heart
-                                className={`w-4 h-4 transition-transform duration-300 ${isWishlisted ? 'scale-110 fill-pink-500' : ''}`}
+                                loading="lazy"
                             />
-                        </button>
-                    )}
-                </div>
-
-                {/* Condition badge */}
-                <div className="absolute top-3 left-3 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest bg-zinc-950/80 border border-zinc-800 backdrop-blur-md"
-                    style={{ color: cond.color }}>
-                    {cond.label}
-                </div>
-            </div>
-
-            {/* Content */}
-            <div className="p-5">
-                <div className="flex justify-between items-start mb-2">
-                    <h3 className="font-bold text-base text-zinc-100 truncate flex-1 tracking-tight">
-                        {product.title}
-                    </h3>
-                </div>
-
-                <div className="flex items-center justify-between mb-4">
-                    <span className="text-xl font-black text-white tracking-tighter">
-                        ₹{product.price.toLocaleString()}
-                    </span>
-                    <span className="text-[10px] font-medium text-zinc-500 uppercase tracking-widest">
-                        {timeAgo(product.created_at)}
-                    </span>
-                </div>
-
-                {/* Seller & Category Footer */}
-                <div className="flex items-center justify-between pt-4 border-t border-zinc-800/50">
-                    {product.seller && (
-                        <div
-                            className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
-                            onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                if (product.seller?.id) router.push(`/user/${product.seller.id}`);
-                            }}
-                        >
-                            <div className="w-6 h-6 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center text-[10px] font-black text-zinc-300 overflow-hidden relative">
-                                {product.seller.avatar_url ? (
-                                    <Image
-                                        src={product.seller.avatar_url}
-                                        alt=""
-                                        fill
-                                        sizes="24px"
-                                        className="object-cover"
-                                        loading="lazy"
-                                    />
-                                ) : (
-                                    product.seller.full_name?.charAt(0)?.toUpperCase() || '?'
-                                )}
+                        ) : (
+                            <div style={{
+                                width: '100%', height: '100%',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                background: '#2a2a2a', fontSize: '3rem',
+                            }}>
+                                📦
                             </div>
-                            <span className="text-[11px] font-medium text-zinc-400 hover:text-white transition-colors">
-                                {product.seller.full_name?.split(' ')[0] || 'Peer'}
+                        )}
+
+                        {/* Overlay top gradient */}
+                        <div style={{
+                            position: 'absolute', inset: 0,
+                            background: 'linear-gradient(to bottom, rgba(0,0,0,0.0) 50%, rgba(0,0,0,0.4) 100%)',
+                            pointerEvents: 'none',
+                        }} />
+
+                        {/* Owner actions */}
+                        {isOwner && (
+                            <div style={{ position: 'absolute', top: '10px', left: '10px', display: 'flex', gap: '6px' }}>
+                                <motion.button
+                                    whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
+                                    onClick={e => { e.preventDefault(); e.stopPropagation(); router.push(`/edit/${product.id}`); }}
+                                    style={{
+                                        width: '30px', height: '30px', borderRadius: '50%',
+                                        background: 'rgba(20,20,20,0.85)',
+                                        border: '1px solid rgba(255,255,255,0.15)',
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                        cursor: 'pointer', color: '#ccc',
+                                    }}
+                                >
+                                    <Edit style={{ width: '12px', height: '12px' }} />
+                                </motion.button>
+                                <motion.button
+                                    whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
+                                    onClick={handleDelete}
+                                    style={{
+                                        width: '30px', height: '30px', borderRadius: '50%',
+                                        background: 'rgba(20,20,20,0.85)',
+                                        border: '1px solid rgba(255,60,60,0.3)',
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                        cursor: 'pointer', color: '#ff4d4d',
+                                    }}
+                                >
+                                    <Trash2 style={{ width: '12px', height: '12px' }} />
+                                </motion.button>
+                            </div>
+                        )}
+
+                        {/* Condition badge bottom left */}
+                        <div style={{
+                            position: 'absolute', bottom: '10px', left: '10px',
+                            background: cond.bg,
+                            borderRadius: '999px',
+                            padding: '4px 10px',
+                            fontSize: '0.62rem',
+                            fontWeight: 700,
+                            fontFamily: "'Syne', sans-serif",
+                            letterSpacing: '0.06em',
+                            textTransform: 'uppercase',
+                            color: cond.color,
+                        }}>
+                            {cond.label}
+                        </div>
+
+                        {/* Wishlist / + button bottom right */}
+                        {!isOwner && (
+                            <motion.button
+                                whileHover={{ scale: 1.12 }} whileTap={{ scale: 0.9 }}
+                                onClick={handleWishlistToggle}
+                                style={{
+                                    position: 'absolute', bottom: '10px', right: '10px',
+                                    width: '32px', height: '32px', borderRadius: '50%',
+                                    background: isWishlisted ? '#ff6b2b' : 'rgba(26,26,26,0.85)',
+                                    border: `1.5px solid ${isWishlisted ? '#ff6b2b' : 'rgba(255,255,255,0.15)'}`,
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    cursor: 'pointer',
+                                    transition: 'background 150ms ease, border-color 150ms ease',
+                                }}
+                            >
+                                <Heart
+                                    style={{ width: '14px', height: '14px', color: isWishlisted ? '#fff' : '#aaa' }}
+                                    fill={isWishlisted ? '#fff' : 'none'}
+                                />
+                            </motion.button>
+                        )}
+                    </div>
+
+                    {/* Content */}
+                    <div style={{ padding: '14px 14px 16px' }}>
+                        {/* Price */}
+                        <div style={{
+                            fontFamily: "'Syne', sans-serif",
+                            fontSize: '1.1rem',
+                            fontWeight: 800,
+                            color: '#ff6b2b',
+                            marginBottom: '6px',
+                            letterSpacing: '-0.01em',
+                        }}>
+                            ₹{product.price.toLocaleString()}
+                        </div>
+
+                        {/* Title */}
+                        <h3 style={{
+                            fontFamily: "'Inter', sans-serif",
+                            fontSize: '0.875rem',
+                            fontWeight: 600,
+                            color: '#ffffff',
+                            margin: '0 0 8px',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                        }}>
+                            {product.title}
+                        </h3>
+
+                        {/* Seller + time */}
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <span
+                                style={{ fontSize: '0.72rem', color: '#555', fontFamily: "'Inter', sans-serif", cursor: 'pointer' }}
+                                onClick={e => { e.preventDefault(); e.stopPropagation(); if (product.seller?.id) router.push(`/user/${product.seller.id}`); }}
+                            >
+                                {product.seller?.full_name?.split(' ')[0] || 'Peer'}
+                            </span>
+                            <span style={{ fontSize: '0.68rem', color: '#444', fontFamily: "'Inter', sans-serif" }}>
+                                {timeAgo(product.created_at)}
                             </span>
                         </div>
-                    )}
-                    {product.category && (
-                        <span className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest">
-                            {product.category.name}
-                        </span>
-                    )}
-                </div>
-            </div>
-        </Link>
+                    </div>
+                </motion.div>
+            </Link>
+        </motion.div>
     );
-
 }
 
-// Memoize to prevent unnecessary re-renders when parent re-renders (e.g. category filter change)
 export const ProductCard = memo(ProductCardInner);

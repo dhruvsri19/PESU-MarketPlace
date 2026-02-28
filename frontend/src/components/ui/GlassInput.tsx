@@ -9,35 +9,75 @@ interface GlassInputProps extends InputHTMLAttributes<HTMLInputElement> {
 }
 
 export const GlassInput = forwardRef<HTMLInputElement, GlassInputProps>(
-    ({ label, error, icon, className = '', ...props }, ref) => {
+    ({ label, error, icon, className = '', style, onFocus, onBlur, ...props }, ref) => {
         return (
-            <div className="w-full">
+            <div style={{ width: '100%' }}>
                 {label && (
-                    <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
+                    <label style={{
+                        display: 'block',
+                        fontFamily: "'Syne', sans-serif",
+                        fontSize: '0.68rem',
+                        fontWeight: 700,
+                        letterSpacing: '0.1em',
+                        textTransform: 'uppercase',
+                        color: '#555',
+                        marginBottom: '8px',
+                    }}>
                         {label}
                     </label>
                 )}
-                <div className="relative">
+                <div style={{ position: 'relative' }}>
                     {icon && (
-                        <div className="absolute left-3 top-1/2 -translate-y-1/2"
-                            style={{ color: 'var(--text-muted)' }}>
+                        <div style={{
+                            position: 'absolute', left: '14px',
+                            top: '50%', transform: 'translateY(-50%)',
+                            color: '#555', display: 'flex', alignItems: 'center',
+                            pointerEvents: 'none',
+                        }}>
                             {icon}
                         </div>
                     )}
                     <input
                         ref={ref}
-                        className={`
-              glass-input w-full px-5 py-3.5 text-sm bg-zinc-900 border border-zinc-800 rounded-xl text-zinc-100 placeholder:text-zinc-600
-              ${icon ? 'pl-11' : ''}
-              ${error ? 'border-red-500/50 focus:border-red-500' : 'focus:border-electric-violet'}
-              ${className}
-            `}
+                        className={className}
+                        style={{
+                            width: '100%',
+                            padding: icon ? '12px 16px 12px 42px' : '12px 16px',
+                            fontSize: '0.875rem',
+                            fontFamily: "'Inter', sans-serif",
+                            color: '#ffffff',
+                            background: '#242424',
+                            border: error
+                                ? '1.5px solid rgba(255,80,80,0.6)'
+                                : '1.5px solid rgba(255,255,255,0.07)',
+                            borderRadius: '12px',
+                            outline: 'none',
+                            transition: 'border-color 150ms ease, box-shadow 150ms ease',
+                            ...style,
+                        }}
+                        onFocus={e => {
+                            if (!error) {
+                                e.currentTarget.style.borderColor = '#ff6b2b';
+                                e.currentTarget.style.boxShadow = '0 0 0 3px rgba(255,107,43,0.18)';
+                            }
+                            onFocus?.(e);
+                        }}
+                        onBlur={e => {
+                            e.currentTarget.style.borderColor = error
+                                ? 'rgba(255,80,80,0.6)' : 'rgba(255,255,255,0.07)';
+                            e.currentTarget.style.boxShadow = 'none';
+                            onBlur?.(e);
+                        }}
                         {...props}
                     />
-
                 </div>
                 {error && (
-                    <p className="mt-1.5 text-xs text-red-400">{error}</p>
+                    <p style={{
+                        marginTop: '6px', fontSize: '0.75rem', color: '#ff4d4d',
+                        fontFamily: "'Inter', sans-serif",
+                    }}>
+                        {error}
+                    </p>
                 )}
             </div>
         );

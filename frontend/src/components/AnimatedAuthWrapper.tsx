@@ -19,11 +19,14 @@ export function AnimatedAuthWrapper({ children, isVisible }: AnimatedAuthWrapper
                     exit={{ opacity: 0, transition: { duration: 0.5, ease: 'easeInOut' } }}
                     className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-xl"
                 >
-                    {/* Ambient background glow for the full screen */}
+                    {/* Ambient background glow */}
                     <div className="absolute inset-0 pointer-events-none overflow-hidden">
-                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-[var(--neon-purple)] opacity-5 blur-[150px] rounded-full" />
-                        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-500/10 blur-[120px] rounded-full mix-blend-screen" />
-                        <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-purple-500/10 blur-[150px] rounded-full mix-blend-screen" />
+                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] blur-[140px] rounded-full opacity-10"
+                            style={{ background: '#ff6b2b' }} />
+                        <div className="absolute top-0 right-0 w-[400px] h-[400px] blur-[100px] rounded-full opacity-8"
+                            style={{ background: '#f5c518', mixBlendMode: 'screen' }} />
+                        <div className="absolute bottom-0 left-0 w-[450px] h-[450px] blur-[120px] rounded-full opacity-6"
+                            style={{ background: '#ff6b2b', mixBlendMode: 'screen' }} />
                     </div>
 
                     <motion.div
